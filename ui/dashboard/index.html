@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Excel</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            font-family: Poppins, sans-serif;
+            letter-spacing: 2px;
+            margin-top: 0;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Added */
+            animation: slideIn 1s ease-in-out;
+        }
+        button {
+            padding: 10px 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-family: Poppins, sans-serif;
+            animation: pulse 1s infinite;
+        }
+        button:hover {
+            background-color: #f2f2f2;
+            color: black;
+        }
+        @keyframes slideIn {
+            0% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <form action="/generar_excel" method="post">
+        <h1>Generador de Excel</h1> <!-- Moved up -->
+        <button type="submit">Generar Excel</button> <!-- Moved down -->
+    </form>
+</body>
+</html>
