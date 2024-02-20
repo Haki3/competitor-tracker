@@ -7,6 +7,9 @@ const fs = require('fs');
 const stringSimilarity = require('string-similarity');
 const { MongoClient } = require('mongodb');
 const { updateCompetitor } = require('./utils/logic/updateCompetitorPrices');
+const { exec } = require('child_process');
+
+
 
 const { DEV_DB, PROD_DB } = process.env;
 
@@ -17,7 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const url = process.env.NODE_ENV === 'development' ? DEV_DB : PROD_DB;
 const dbName = process.env.DB_NAME
-const collectionName = process.env.COLLECTION_NAME;
+const collectionName = process.env.DB_COLLECTION;
 
 const client = new MongoClient(url);
 const tiendasConfig = {
@@ -98,7 +101,11 @@ app.post('/generar_excel/', async (req, res) => {
 
         await Promise.all(tiendaSolarProductos.map(async productoSolar => {
             const rowData = { Product_Name: productoSolar.product_name };
-            rowData[tiendasConfig.Tienda_Solar] = productoSolar.product_price;
+            // Aplicar product_url como hyperlink al precio del producto
+            rowData[tiendasConfig.Tienda_Solar] = {
+                text: productoSolar.product_price,
+                hyperlink: productoSolar.product_url
+            };
 
             // Verificar si hay al menos un competidor con precio definido
             const hasCompetitorPrice = Object.values(tiendasConfig).some(tienda => {
@@ -107,8 +114,8 @@ app.post('/generar_excel/', async (req, res) => {
                         p.product_store === tienda &&
                         isSimilarProductName(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
                     );
-
-                    const similarityThreshold = 0.9;
+                    // Si el producto contiene la palabra "Victron" y "MPPT" se subira el umbral de similitud solamente a numero para aumentar la precision al 100%
+                    const similarityThreshold = normalizeText(productoSolar.product_name).includes('victron') && normalizeText(productoSolar.product_name).includes('mppt') ? 0.985 : 0.9;
                     const selectedProducto = matchingProductos.find(p =>
                         stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
                     );
@@ -131,8 +138,13 @@ app.post('/generar_excel/', async (req, res) => {
                         const selectedProducto = matchingProductos.find(p =>
                             stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
                         );
-
-                        rowData[tienda] = selectedProducto && selectedProducto.product_price ? selectedProducto.product_price : null;
+                        // Aplicar product_url como hyperlink al precio del producto
+                        if (selectedProducto && selectedProducto.product_price !== null && selectedProducto.product_price !== undefined) {
+                            rowData[tienda] = {
+                                text: selectedProducto.product_price,
+                                hyperlink: selectedProducto.product_url
+                            };
+                        }
                     }
                 });
 
@@ -145,9 +157,20 @@ app.post('/generar_excel/', async (req, res) => {
         const filePath = `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
         await workbook.xlsx.writeFile(filePath);
 
-        res.download(filePath, `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
-            // Eliminar el archivo después de la descarga
-            fs.unlinkSync(filePath);
+        // Call the Python script to apply styles
+        const pythonScript = 'apply_style.py';
+        exec(`python3 ${pythonScript} ${filePath}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error applying styles: ${stderr}`);
+                res.status(500).send('Error en el servidor');
+                return;
+            }
+
+            // Send the file for download
+            res.download(filePath, `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
+                // Eliminar el archivo después de la descarga
+                fs.unlinkSync(filePath);
+            });
         });
     } catch (error) {
         console.error(error);

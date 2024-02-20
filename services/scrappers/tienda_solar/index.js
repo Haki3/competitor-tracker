@@ -49,14 +49,17 @@ async function tiendaSolarScrapper(url, product_type) {
                 break;
             }
 
-
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productPriceXPath);
 
-            products.push({ product_name, product_price, product_type, product_store: 'tienda_solar' });
+            let product_url = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.href : null;
+            }, productNameXPath);
+
+            products.push({ product_name, product_price, product_type, product_store: 'tienda_solar', product_url });
             hasProducts = true;
         }
 

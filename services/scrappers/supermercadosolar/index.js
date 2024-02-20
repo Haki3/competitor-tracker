@@ -23,6 +23,7 @@ async function supermercadosolarMain() {
         }
 
         const products = panels.concat(inverters, batteries);
+
         await sendToDatabase(products);
     } catch (error) {
         console.error('Error in autosolarMain', error);
@@ -52,11 +53,16 @@ async function supermercadosolarScrapper(url, product_type) {
             return element ? element.textContent : null;
         }, product_price_xpath);
 
+        let product_url = await page.evaluate((xpath) => {
+            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            return element ? element.href : null;
+        }, product_name_xpath);
+
         if (!product_name) {
             break;
         }
 
-        products.push({ product_name, product_price });
+        products.push({ product_name, product_price, product_url });
 
         i++;
     }
@@ -79,6 +85,5 @@ async function supermercadosolarScrapper(url, product_type) {
     await browser.close();
     return products;
 }
-
 
 module.exports = supermercadosolarMain;

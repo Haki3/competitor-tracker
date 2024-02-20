@@ -69,13 +69,17 @@ async function atersaScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }, product_price_xpath_fallback_3);
         }
-        
+        // Get the href linked to the product
+        let product_url = await page.evaluate((i) => {
+            const element = document.evaluate(`/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            return element ? element.href : null;
+        }, i);        
 
         if (!product_name) {
             break;
         }
 
-        products.push({ product_name, product_price });
+        products.push({ product_name, product_price, product_url });
 
         i++;
     }
@@ -93,6 +97,9 @@ async function atersaScrapper(url, product_type) {
             product.product_type = product_type;
         }
 
+        if (product.product_url) {
+            product.product_url = product.product_url;
+        }
         return product;
     });
 

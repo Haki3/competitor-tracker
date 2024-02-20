@@ -37,7 +37,7 @@ async function sendToDatabase(products) {
                     changes.updatedProducts.push({ old: productInDatabase[0], new: product });
                     await collection.updateOne(
                         { product_name: product.product_name, product_store: product.product_store },
-                        { $set: { product_price: product.product_price } }
+                        { $set: { product_price: product.product_price, product_url: product.product_url } }
                     );
                 }
             } else {

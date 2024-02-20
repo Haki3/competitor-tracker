@@ -36,6 +36,8 @@ async function autosolarMain() {
 
         console.log('Autosolar prices updated. Sending to database...')
 
+        // console.log('Autosolar product urls:', products.map(product => product.product_url));
+
         await sendToDatabase(products);
     } catch (error) {
         console.error('Error in autosolarMain', error);
@@ -60,6 +62,7 @@ async function autosolarScrapper(url, product_type) {
             let productPriceXPath;
             if (product_type === 'inverter') {
                 productNameXPath =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productUrlXpath =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;    
                 productPriceXPath =         `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[1]`;
@@ -68,6 +71,7 @@ async function autosolarScrapper(url, product_type) {
                 productPriceFallbackXPath5 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
             } else {
                 productNameXPath =          `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
+                productUrlXpath =           `/html/body/main/div/div[3]/div[1]/div[${i}]/a`;
                 productPriceXPath =           `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[1]`;
@@ -146,13 +150,19 @@ async function autosolarScrapper(url, product_type) {
                 , productPriceFallbackXPath2);
             }
 
+            let product_url = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.href : null;
+            }
+            , productUrlXpath);            
+
             if (product_name === null) {
                 isLastPage = true; // Si el nombre del producto es null, marcamos que estamos en la última página
                 break;
             } else {
 
-                
-                products.push({ product_name, product_price });
+
+            products.push({ product_name, product_price, product_url });
 
                 // Añadir a cada elemento de products el campo "product_store" con el valor "autosolar" y eliminar el signo de euro del precio y sea un integer pero manteniendo los decimales
                 for (const product of products) {

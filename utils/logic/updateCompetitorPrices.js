@@ -7,9 +7,9 @@ const supermercadosolarMain = require('../../services/scrappers/supermercadosola
 async function updateCompetitor(parametro) {
     const scrappers = {
         'tienda_solar': tiendaSolarMain,
-        // 'atersa': atersaMain,
+        'atersa': atersaMain,
         // 'autosolar': autosolarMain,
-        // 'supermercadosolar': supermercadosolarMain,
+        'supermercadosolar': supermercadosolarMain,
     };
 
     if (scrappers[parametro]) {
