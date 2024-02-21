@@ -3,13 +3,15 @@ const tiendaSolarMain = require('../../services/scrappers/tienda_solar');
 const atersaMain = require('../../services/scrappers/atersa');
 const autosolarMain = require('../../services/scrappers/autosolar');
 const supermercadosolarMain = require('../../services/scrappers/supermercadosolar');
+const wccSolarMain = require('../../services/scrappers/wcc');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
-        'tienda_solar': tiendaSolarMain,
-        'atersa': atersaMain,
-        // 'autosolar': autosolarMain,
-        'supermercadosolar': supermercadosolarMain,
+        // 'tienda_solar': tiendaSolarMain,
+        // 'atersa': atersaMain,
+        // // 'autosolar': autosolarMain,
+        // 'supermercadosolar': supermercadosolarMain,
+        'wcc': wccSolarMain
     };
 
     if (scrappers[parametro]) {

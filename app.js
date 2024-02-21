@@ -28,6 +28,7 @@ const tiendasConfig = {
     Atersa: 'atersa',
     Autosolar: 'autosolar',
     SupermercadoSolar: 'supermercadosolar',
+    WccSolar: 'wcc'
     // Agrega más tiendas según sea necesario
 };
 

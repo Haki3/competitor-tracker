@@ -1,12 +1,5 @@
 const puppeteer = require('puppeteer');
-const fs = require('fs');
-const path = require('path');
-const { Parser } = require('json2csv');
-const { DEV_DB } = process.env;
-const mongodb = require('mongodb');
-const { send } = require('process');
 const { sendToDatabase } = require('../../../utils/db');
-
 
 
 async function supermercadosolarMain() {
