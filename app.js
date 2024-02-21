@@ -83,8 +83,8 @@ app.post('/generar_excel/', async (req, res) => {
 
         // Crear un nuevo workbook de Excel
         const workbook = new ExcelJS.Workbook();
-        // Ponerle un nombre a la hoja de trabajo con formato "comp_prod_YYYY-MM-DD_HH:MM:SS"
-        const worksheet = workbook.addWorksheet(`comp_prod_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}`);
+        // Ponerle un nombre a la hoja de trabajo con formato "comp_prod_YYYY-MM-DD"
+        const worksheet = workbook.addWorksheet(`Competidores ${new Date().toISOString().split('T')[0]}`);
 
         // Definir encabezados de columnas
         const columns = [
@@ -166,8 +166,8 @@ app.post('/generar_excel/', async (req, res) => {
                 return;
             }
 
-            // Send the file for download
-            res.download(filePath, `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
+            // Send the file for download as Informe_Competidores_YYYY-MM-DD_HH:MM:SS.xlsx en lugar de una T en la fecha se pone un guion bajo
+            res.download(filePath, `Informe_Competidores_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
                 // Eliminar el archivo después de la descarga
                 fs.unlinkSync(filePath);
             });
