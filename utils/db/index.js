@@ -53,7 +53,5 @@ async function sendToDatabase(products) {
     } catch (error) {
         console.error('Error sending products to the database', error);
     }
-
-    console.log('Changes:', JSON.stringify(changes, null, 2));
 }
 module.exports = { connectToDatabase, sendToDatabase };

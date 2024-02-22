@@ -46,7 +46,7 @@ def apply_styles(file_path):
         cell.alignment = left_alignment
         cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
         column_letter = get_column_letter(cell.column)
-        worksheet.column_dimensions[column_letter].width = max(len(cell.value) + 8, 10)  # Ajustar ancho de columna
+        worksheet.column_dimensions[column_letter].width = max(len(cell.value) + 11, 10)  # Ajustar ancho de columna
 
     # Estilo para las celdas después de la segunda columna
     for column in worksheet.iter_cols(min_col=2):

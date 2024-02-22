@@ -7,10 +7,10 @@ const wccSolarMain = require('../../services/scrappers/wcc');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
-        // 'tienda_solar': tiendaSolarMain,
-        // 'atersa': atersaMain,
-        // // 'autosolar': autosolarMain,
-        // 'supermercadosolar': supermercadosolarMain,
+        'tienda_solar': tiendaSolarMain,
+        'atersa': atersaMain,
+        'autosolar': autosolarMain,
+        'supermercadosolar': supermercadosolarMain,
         'wcc': wccSolarMain
     };
 
