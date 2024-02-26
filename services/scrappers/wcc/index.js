@@ -157,7 +157,7 @@ async function inverterScrapper(url, product_type) {
         product.product_store = 'wcc';
         product.product_type = product_type;
         if (typeof product.product_price === 'string') {
-            product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
+            product.product_price = parseFloat(product.product_price.replace('€', '').replace(',', '.'));
         }
 
         //  Si queda cualquier producto sin product_type, asignarle el valor "wcc"
@@ -397,7 +397,7 @@ async function chargeRegulatorSolarScrapper(url, product_type) {
         product.product_store = 'wcc';
         product.product_type = product_type;
         if (typeof product.product_price === 'string') {
-            product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
+            product.product_price = parseFloat(product.product_price.replace('€', '').replace(',', '.'));
         }
 
         //  Si queda cualquier producto sin product_type, asignarle el valor "wcc"

@@ -26,7 +26,7 @@ async function supermercadosolarMain() {
 
 async function supermercadosolarScrapper(url, product_type) {
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
     const page = await browser.newPage();
     await page.goto(url);
 

@@ -9,8 +9,6 @@ const { MongoClient } = require('mongodb');
 const { updateCompetitor } = require('./utils/logic/updateCompetitorPrices');
 const { exec } = require('child_process');
 
-
-
 const { DEV_DB, PROD_DB } = process.env;
 
 const app = express();
@@ -51,8 +49,7 @@ const isExcludedProduct = (name) => {
     return excludedValues.includes(normalized);
 };
 
-const isSimilarProductName = (name1, name2) => {
-    const similarityThreshold = 0.88;
+const isSimilarProduct = (name1, name2) => {
     const normalized1 = normalizeText(name1);
     const normalized2 = normalizeText(name2);
 
@@ -61,7 +58,32 @@ const isSimilarProductName = (name1, name2) => {
         return false;
     }
 
-    return stringSimilarity.compareTwoStrings(normalized1, normalized2) > similarityThreshold;
+    // Extraer números del modelo de ambos nombres
+    const numbersName1 = normalized1.match(/\d+/g);
+    const numbersName2 = normalized2.match(/\d+/g);
+
+    // Verificar si ambos nombres tienen números de modelo
+    if (numbersName1 && numbersName2) {
+        // Convertir números a cadenas y comparar si son iguales
+        if (numbersName1.join('') === numbersName2.join('')) {
+            return true;
+        }
+    }
+
+    // Convertir los nombres a listas de palabras clave
+    const keywords1 = normalized1.split(' ');
+    const keywords2 = normalized2.split(' ');
+
+    // Calcular la intersección de palabras clave
+    const commonKeywords = keywords1.filter(keyword => keywords2.includes(keyword));
+
+    // Calcular la proporción de palabras clave compartidas
+    const similarityScore = commonKeywords.length / Math.min(keywords1.length, keywords2.length);
+
+    // Establecer un umbral de similitud deseado
+    const similarityThreshold = 0.5;
+
+    return similarityScore > similarityThreshold;
 };
 
 app.get('/', (req, res) => {
@@ -113,9 +135,9 @@ app.post('/generar_excel/', async (req, res) => {
                 if (tienda !== tiendasConfig.Tienda_Solar) {
                     const matchingProductos = allTiendasProductos.filter(p =>
                         p.product_store === tienda &&
-                        isSimilarProductName(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
+                        isSimilarProduct(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
                     );
-                    // Si el producto contiene la palabra "Victron" y "MPPT" se subira el umbral de similitud solamente a numero para aumentar la precision al 100%
+                    // Si el producto contiene la palabra "Victron" y "MPPT" se subirá el umbral de similitud solamente a número para aumentar la precisión al 100%
                     const similarityThreshold = normalizeText(productoSolar.product_name).includes('victron') && normalizeText(productoSolar.product_name).includes('mppt') ? 0.985 : 0.9;
                     const selectedProducto = matchingProductos.find(p =>
                         stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
@@ -132,7 +154,7 @@ app.post('/generar_excel/', async (req, res) => {
                     if (tienda !== tiendasConfig.Tienda_Solar) {
                         const matchingProductos = allTiendasProductos.filter(p =>
                             p.product_store === tienda &&
-                            isSimilarProductName(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
+                            isSimilarProduct(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
                         );
 
                         const similarityThreshold = 0.9;
