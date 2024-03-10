@@ -12,6 +12,7 @@ async function tiendaSolarMain() {
     const pumping_systems = await tiendaSolarScrapper('https://tienda-solar.es/es/1974-bombeo-solar', 'pumping_system');
 
     const products = panels.concat(inverters, batteries, car_chargers, kits, charge_regulators, structures, pumping_systems);
+    console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'car_chargers:', car_chargers.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
 
     console.log('TiendaSolar prices updated. Sending to database...')
     await sendToDatabase(products);
@@ -86,6 +87,12 @@ async function tiendaSolarScrapper(url, product_type) {
         if (!product.product_type) {
             product.product_type = product_type;
         }
+
+        // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
+        product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
+
+        // Eliminar espacios al principio y al final
+        product.product_name = product.product_name.trim();  
     }
 
     await browser.close();

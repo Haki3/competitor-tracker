@@ -11,6 +11,7 @@ async function wccSolarMain() {
     const pumping_systems = await pumpingSystemsSolarScrapper('https://www.wccsolar.net/bombas-de-agua-solar', 'pumping_system');
 
     const products = panels.concat(inverters, batteries, kits, charge_regulators, structures, pumping_systems);
+    console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
     console.log('wccSolar prices updated. Sending to database...');
 
     await sendToDatabase(products);
@@ -26,23 +27,20 @@ async function panelScrapper(url, product_type) {
         const page = await browser.newPage();
         await page.goto(`${url}?page=${pageNum}`);
 
-        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
+        let hasProducts = false;  // Inicializar hasProducts en false
 
         for (let i = 1; ; i++) {
-            const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
-            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
-            const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a`;
+            const productNameXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
+            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
+            const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const productUrlXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
-
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
 
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -50,7 +48,15 @@ async function panelScrapper(url, product_type) {
             }, productPriceXPath);
 
             if (product_price === null) {
-                product_price = 'Agotado';
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, productPriceXPath2);
+            }
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
             }
 
             let product_url = await page.evaluate((xpath) => {
@@ -58,20 +64,42 @@ async function panelScrapper(url, product_type) {
                 return element ? element.getAttribute('href') : null;
             }, productUrlXPath);
 
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+
+            }
+
+            if(!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
+
             products.push({
                 product_name,
                 product_price,
                 product_url,
             });
 
-            hasProducts = true;
-        }
+            hasProducts = true;  // Establecer hasProducts en true solo si encuentras un producto
 
-        if (!hasProducts) {
-            break;
         }
+            if (!hasProducts) {
+                break;
+            }
 
-        pageNum++;
+            pageNum++;
     }
 
     // Añadir a cada elemento de products el campo "product_store" con el valor "wcc" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
@@ -92,6 +120,7 @@ async function panelScrapper(url, product_type) {
     return products;
 }
 
+
 async function inverterScrapper(url, product_type) {
     const products = [];
 
@@ -102,28 +131,37 @@ async function inverterScrapper(url, product_type) {
         const page = await browser.newPage();
         await page.goto(`${url}?page=${pageNum}`);
 
-        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
+        let hasProducts = false;  // Inicializar hasProducts en false
 
         for (let i = 1; ; i++) {
-            const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
-            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
-            const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
+            const productNameXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
+            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
+            const productUrlXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
+
+            if (product_price === null) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, productPriceXPath2);
+            }
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
 
             if (product_price === null) {
                 product_price = 'Agotado';
@@ -132,8 +170,30 @@ async function inverterScrapper(url, product_type) {
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.getAttribute('href') : null;
+            }, productUrlXPath);
+
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+
             }
-            , productUrlXPath);
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
 
             products.push({
                 product_name,
@@ -141,8 +201,7 @@ async function inverterScrapper(url, product_type) {
                 product_url,
             });
 
-            hasProducts = true;
-
+            hasProducts = true;  // Establecer hasProducts en true solo si encuentras un producto
         }
 
         if (!hasProducts) {
@@ -166,8 +225,6 @@ async function inverterScrapper(url, product_type) {
         }
     });
 
-    
-
     await browser.close();
     return products;
 }
@@ -182,28 +239,42 @@ async function batterySolarScrapper(url, product_type) {
         const page = await browser.newPage();
         await page.goto(`${url}?page=${pageNum}`);
 
-        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
+        let hasProducts = false;  // Inicializar hasProducts en false
 
         for (let i = 1; ; i++) {
-            const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
-            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
-            const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
+            const productNameXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
+            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
+            const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[6]/div/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const productUrlXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[2]/div/div[6]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
+
+            if (product_price === null) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, productPriceXPath2);
+            }
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
 
             if (product_price === null) {
                 product_price = 'Agotado';
@@ -212,7 +283,29 @@ async function batterySolarScrapper(url, product_type) {
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.getAttribute('href') : null;
-            } , productUrlXPath);
+            }, productUrlXPath);
+
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+            }
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
 
             products.push({
                 product_name,
@@ -229,7 +322,6 @@ async function batterySolarScrapper(url, product_type) {
         }
 
         pageNum++;
-
     }
 
     // Añadir a cada elemento de products el campo "product_store" con el valor "wcc" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
@@ -246,8 +338,6 @@ async function batterySolarScrapper(url, product_type) {
         }
     });
 
-    
-
     await browser.close();
     return products;
 }
@@ -262,28 +352,29 @@ async function kitsSolarScrapper(url, product_type) {
         const page = await browser.newPage();
         await page.goto(`${url}?page=${pageNum}`);
 
-        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
+        let hasProducts = false;  // Inicializar hasProducts en false
 
         for (let i = 1; ; i++) {
-            const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[4]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
-            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[4]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
-            const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[2]/div[4]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
+            const productNameXPath   =  `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
+            const productPriceXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
+            const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
+            const productUrlXPath    =   `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
 
             if (product_price === null) {
                 product_price = 'Agotado';
@@ -292,7 +383,29 @@ async function kitsSolarScrapper(url, product_type) {
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.getAttribute('href') : null;
-            } , productUrlXPath);
+            }, productUrlXPath);
+
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+            }
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
 
             products.push({
                 product_name,
@@ -302,6 +415,7 @@ async function kitsSolarScrapper(url, product_type) {
 
             hasProducts = true;
 
+            
         }
 
         if (!hasProducts) {
@@ -309,7 +423,6 @@ async function kitsSolarScrapper(url, product_type) {
         }
 
         pageNum++;
-
     }
 
     // Añadir a cada elemento de products el campo "product_store" con el valor "wcc" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
@@ -346,7 +459,9 @@ async function chargeRegulatorSolarScrapper(url, product_type) {
 
         for (let i = 1; ; i++) {
             const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
-            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
+            const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;     
+            const innerProductPriceXPath =  `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 =  `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
             const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
@@ -354,25 +469,46 @@ async function chargeRegulatorSolarScrapper(url, product_type) {
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
 
-            if (product_price === null) {
-                product_price = 'Agotado';
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
             }
 
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.getAttribute('href') : null;
             } , productUrlXPath);
+
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+            }
+
+            if (product_price === null) {
+                product_price = 'Agotado';
+            }
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
 
             products.push({
                 product_name,
@@ -381,7 +517,6 @@ async function chargeRegulatorSolarScrapper(url, product_type) {
             });
 
             hasProducts = true;
-
         }
 
         if (!hasProducts) {
@@ -427,6 +562,9 @@ async function structuresSolarScrapper(url, product_type) {
         for (let i = 1; ; i++) {
             const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[1]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
             const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[1]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
+            const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
+            const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
             const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[1]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
@@ -434,16 +572,22 @@ async function structuresSolarScrapper(url, product_type) {
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
+
+            if (product_price === null) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, productPriceXPath2);
+            }
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
+            
 
             if (product_price === null) {
                 product_price = 'Agotado';
@@ -454,6 +598,28 @@ async function structuresSolarScrapper(url, product_type) {
                 return element ? element.getAttribute('href') : null;
             } , productUrlXPath);
 
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+            }
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
+
             products.push({
                 product_name,
                 product_price,
@@ -461,6 +627,8 @@ async function structuresSolarScrapper(url, product_type) {
             });
 
             hasProducts = true;
+
+            
 
         }
 
@@ -507,6 +675,9 @@ async function pumpingSystemsSolarScrapper(url, product_type) {
         for (let i = 1; ; i++) {
             const productNameXPath  = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
             const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
+            const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/span[2]`;
+            const innerProductPriceXPath =  `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`
+            const innerProductPriceXPath2 =  `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div[2]/span[1]`;
             const productUrlXPath   = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[3]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a`;
 
             let product_name = await page.evaluate((xpath) => {
@@ -514,16 +685,22 @@ async function pumpingSystemsSolarScrapper(url, product_type) {
                 return element ? element.textContent.trim() : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
-            if (!product_name) {
-                hasProducts = false;  // Establecer hasProducts en false
-                break;
-            }
-
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent.trim() : null;
             }, productPriceXPath);
+
+            if (product_price === null) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, productPriceXPath2);
+            }
+
+            // Eliminar la palabra Desde del precio
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
 
             if (product_price === null) {
                 product_price = 'Agotado';
@@ -533,6 +710,28 @@ async function pumpingSystemsSolarScrapper(url, product_type) {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.getAttribute('href') : null;
             } , productUrlXPath);
+
+            if((product_price === null || product_price == undefined || product_price == '') && product_url) {
+                console.log('Navigating to inner page...')
+                // Navigate to the url of the product to get the price from the inner page using the innerProductPriceXPath2 first and if it fails, use the innerProductPriceXPath
+                await page.goto(product_url);
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent.trim() : null;
+                }, innerProductPriceXPath2);
+
+                if (product_price === null) {
+                    product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, innerProductPriceXPath);
+                }
+            }
+
+            if (!product_name) {
+                // Salir del bucle si no hay un nombre de producto
+                break;
+            }
 
             products.push({
                 product_name,

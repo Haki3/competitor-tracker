@@ -28,8 +28,6 @@ async function autosolarMain() {
 
         console.log('Autosolar prices updated. Sending to database...')
 
-        // console.log('Autosolar product urls:', products.map(product => product.product_url));
-
         await sendToDatabase(products);
     } catch (error) {
         console.error('Error in autosolarMain', error);
@@ -153,8 +151,27 @@ async function autosolarScrapper(url, product_type) {
                 break;
             } else {
 
+                // Limpiar el nombre del producto de las palabras a eliminar
+                const listaPalabrasEliminar = [
+                    'Inversor',
+                    'Hibrido',
+                    'Híbrido',
+                    'Batería',
+                    'Bateria',
+                    'Litio',
+                    'Ion',
+                    '(HC)',
+                ];
+                for (const palabra of listaPalabrasEliminar) {
+                    product_name = product_name.replace(palabra, '');
+                }
+                // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
+                product_name = product_name.replace(/(Inversor|Panel|Bateria|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
 
-            products.push({ product_name, product_price, product_url });
+                // Limpiar el nombre del producto de los espacios al principio y al final
+                product_name = product_name.trim();
+
+                products.push({ product_name, product_price, product_url });
 
                 // Añadir a cada elemento de products el campo "product_store" con el valor "autosolar" y eliminar el signo de euro del precio y sea un integer pero manteniendo los decimales
                 for (const product of products) {

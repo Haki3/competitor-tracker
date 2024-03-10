@@ -13,6 +13,8 @@ async function atersaMain() {
 
     const products = panels.concat(inverters, batteries, car_chargers, kits, charge_regulators, structures, pumping_systems);
 
+    console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'car_chargers:', car_chargers.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
+
     console.log('Atersa prices updated. Sending to database...')
 
     await sendToDatabase(products);
@@ -27,16 +29,24 @@ async function atersaScrapper(url, product_type) {
     let i = 1;
     let products = [];
     while (true) {
-        const product_name_xpath =              `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
-        const product_price_xpath =             `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
-        const product_price_xpath_fallback =    `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
-        const product_price_xpath_fallback_2 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
-        const product_price_xpath_fallback_3 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
+        const product_name_xpath =              `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
+        const product_name_xpath_fallback =     `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
+        const product_price_xpath =             `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
+        const product_price_xpath_fallback =    `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
+        const product_price_xpath_fallback_2 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
+        const product_price_xpath_fallback_3 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
         
-        const product_name = await page.evaluate((xpath) => {
+        let product_name = await page.evaluate((xpath) => {
             const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             return element ? element.textContent : null;
         }, product_name_xpath);
+
+        if (!product_name) {
+            product_name = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.textContent : null;
+            }, product_name_xpath_fallback);
+        }
 
         let product_price = await page.evaluate((xpath) => {
             const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -63,7 +73,7 @@ async function atersaScrapper(url, product_type) {
         }
         // Get the href linked to the product
         let product_url = await page.evaluate((i) => {
-            const element = document.evaluate(`/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            const element = document.evaluate(`/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
             return element ? element.href : null;
         }, i);        
 
@@ -92,6 +102,13 @@ async function atersaScrapper(url, product_type) {
         if (product.product_url) {
             product.product_url = product.product_url;
         }
+
+        // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
+        product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Batería  |Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
+
+        // Eliminar espacios al principio y al final
+        product.product_name = product.product_name.trim();  
+
         return product;
     });
 

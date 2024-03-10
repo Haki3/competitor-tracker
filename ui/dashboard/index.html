@@ -5,46 +5,73 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generador de Excel</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap">
     <style>
         body {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: black;
+            background-color: #fff; /* White background color */
+            font-family: 'Poppins', sans-serif;
         }
-        h1 {
+        header {
+            width: 100%;
+            background-color: #ffffff; /* Orange background color */
+            padding: 20px 0;
             text-align: center;
-            color: white;
-            font-family: Poppins, sans-serif;
-            letter-spacing: 2px;
-            margin-top: 0;
+            border-bottom: #f57c00;
+        }
+        header img {
+            max-width: 150px; /* Adjust the max-width of your logo */
+            height: auto;
         }
         form {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            flex-direction: column; /* Added */
+            text-align: center;
             animation: slideIn 1s ease-in-out;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            background-color: #fafafa; /* Lighter background color */
+            margin-top: 40px;
+        }
+        h1 {
+            color: #ff9800; /* Orange text color */
+            margin: 0;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        label {
+            color: #333; /* Dark text color */
+            margin-top: 10px;
+        }
+        #lastUpdateDate {
+            color: #ff9800; /* Orange text color */
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: block;
         }
         button {
-            padding: 10px 10px;
+            padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
             border: none;
-            background-color: #4CAF50;
+            background-color: #ff9800; /* Orange background color */
             color: white;
-            font-family: Poppins, sans-serif;
+            font-family: 'Poppins', sans-serif;
             animation: pulse 1s infinite;
+            border-radius: 4px;
         }
         button:hover {
-            background-color: #f2f2f2;
-            color: black;
+            background-color: #f57c00; /* Darker orange on hover */
         }
         @keyframes slideIn {
             0% {
-                transform: translateY(-100px);
+                transform: translateY(-50px);
                 opacity: 0;
             }
             100% {
@@ -66,9 +93,31 @@
     </style>
 </head>
 <body>
-    <form action="/generar_excel" method="post">
-        <h1>Generador de Excel</h1> <!-- Moved up -->
-        <button type="submit">Generar Excel</button> <!-- Moved down -->
+    <header>
+        <img src="https://tienda-solar.es/img/tiendasolar-logo-1567748209.jpg" alt="Logo"> <!-- Replace with your logo -->
+    </header>
+    <form action="/descarga" method="post">
+        <h1>Generador de Excel</h1>
+        <label for="fecha_inicio">Última actualización:</label>
+        <span id="lastUpdateDate">Cargando...</span>
+        <button type="submit">Generar Informe</button>
+
+        <script>
+            const updateLastUpdateDate = async () => {
+                try {
+                    const response = await fetch('/last_update');
+                    const data = await response.json();
+                    const lastUpdateElement = document.getElementById('lastUpdateDate');
+                    lastUpdateElement.textContent = data.lastUpdateDate ? new Date(data.lastUpdateDate).toLocaleString() : 'Sin actualización previa';
+                } catch (error) {
+                    console.error('Error updating last update date:', error);
+                    const lastUpdateElement = document.getElementById('lastUpdateDate');
+                    lastUpdateElement.textContent = 'Error al cargar la fecha de actualización';
+                }
+            };
+
+            updateLastUpdateDate();
+        </script>
     </form>
 </body>
 </html>

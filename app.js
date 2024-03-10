@@ -26,11 +26,13 @@ const tiendasConfig = {
     Atersa: 'atersa',
     Autosolar: 'autosolar',
     SupermercadoSolar: 'supermercadosolar',
-    WccSolar: 'wcc'
-    // Agrega más tiendas según sea necesario
+    WccSolar: 'wcc',
+    AlmacenFotovoltaico: 'almacen_fotovoltaico',
+    rebacas: 'rebacas',
+    Energy_Levante: 'energy_levante'
 };
 
-const palabrasEliminar = ['Panel', 'Inversor', 'Híbrido', 'Bateria', 'Batería', 'Solar', 'Fotovoltaico', 'Fotovoltaica', 'Fotovoltaicos', 'Fotovoltaicas','Módulo', 'Monocristalino', 'Policristalino', 'Monocristalina', 'Policristalina', 'Monocristalinos', 'Policristalinos', 'Monocristalinas', 'Policristalinas', 'Regulador', 'Reguladores', 'Regulador de carga', 'Reguladores de carga', 'Cargador', 'Cargadores', 'Cargador de batería', 'Cargadores de batería', 'Cargador solar', 'Cargadores solares', 'Cargador de batería solar', 'Cargadores de batería solar', 'Cargador de batería fotovoltaico', 'Cargadores de batería fotovoltaico', 'Cargador fotovoltaico', 'Cargadores fotovoltaico', 'Cargador solar fotovoltaico', 'Cargadores solares fotovoltaico', 'Cargador de batería solar fotovoltaico', 'Cargadores de batería solar fotovoltaico', 'Cargador de batería fotovoltaico solar', 'Cargadores de batería fotovoltaico solar', 'Cargador fotovoltaico solar', 'Cargadores fotovoltaico solar', 'Cargador solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar fotovoltaico solar'];
+const palabrasEliminar = ['Panel','Alto Voltaje', 'Inversor', 'Híbrido', 'Bateria', 'Batería', 'Solar', 'Fotovoltaico', 'Fotovoltaica', 'Fotovoltaicos', 'Fotovoltaicas','Módulo', 'Monocristalino', 'Policristalino', 'Monocristalina', 'Policristalina', 'Monocristalinos', 'Policristalinos', 'Monocristalinas', 'Policristalinas', 'Regulador', 'Reguladores', 'Regulador de carga', 'Reguladores de carga', 'Cargador', 'Cargadores', 'Cargador de batería', 'Cargadores de batería', 'Cargador solar', 'Cargadores solares', 'Cargador de batería solar', 'Cargadores de batería solar', 'Cargador de batería fotovoltaico', 'Cargadores de batería fotovoltaico', 'Cargador fotovoltaico', 'Cargadores fotovoltaico', 'Cargador solar fotovoltaico', 'Cargadores solares fotovoltaico', 'Cargador de batería solar fotovoltaico', 'Cargadores de batería solar fotovoltaico', 'Cargador de batería fotovoltaico solar', 'Cargadores de batería fotovoltaico solar', 'Cargador fotovoltaico solar', 'Cargadores fotovoltaico solar', 'Cargador solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar fotovoltaico solar'];
 
 const normalizeText = (text) => {
     if (text && typeof text === 'string') {
@@ -50,11 +52,10 @@ const isExcludedProduct = (name) => {
 };
 
 const isSimilarProduct = (name1, name2) => {
-    const normalized1 = normalizeText(name1);
-    const normalized2 = normalizeText(name2);
+    const normalized1 = name1;
+    const normalized2 = name2;
 
     if (isExcludedProduct(name1) || isExcludedProduct(name2)) {
-        console.log(`Estos productos "${normalized1}" y "${normalized2}" no son considerados similares.`);
         return false;
     }
 
@@ -80,65 +81,84 @@ const isSimilarProduct = (name1, name2) => {
     // Calcular la proporción de palabras clave compartidas
     const similarityScore = commonKeywords.length / Math.min(keywords1.length, keywords2.length);
 
+    // Si el nombre contiene huawei console log
+    if(normalized1.includes('huawei')){
+        console.log('Nombre 1:', normalized1);
+    }
+    if(normalized2.includes('huawei')){
+        console.log('Nombre 2:', normalized2);
+    }
+
     // Establecer un umbral de similitud deseado
-    const similarityThreshold = 0.5;
+    const similarityThreshold = 0.8;
 
     return similarityScore > similarityThreshold;
 };
+
+let lastUpdateDate = null;
+
+// Function to update competitors every 30 seconds
+const updateCompetitorPeriodically = async () => {
+    try {
+        console.log('Updating competitors...');
+        for (const tienda of Object.values(tiendasConfig)) {
+            await updateCompetitor(tienda);
+        }
+        lastUpdateDate = new Date();
+        console.log('Competitors updated at:', lastUpdateDate);
+    } catch (error) {
+        console.error('Error updating competitors:', error);
+    }
+};
+
+updateCompetitorPeriodically();
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
 });
 
-app.post('/generar_excel/', async (req, res) => {
+// Endpoint to get the last update date
+app.get('/last_update', (req, res) => {
+    res.json({ lastUpdateDate });
+});
+
+app.post('/descarga/', async (req, res) => {
     try {
         await client.connect();
-        // Actualizar precios de competidores
-        for (const tienda of Object.values(tiendasConfig)) {
-            await updateCompetitor(tienda);
-        }
 
         const db = client.db(dbName);
         const collection = db.collection(collectionName);
 
-        // Obtener productos con el tag correspondiente a la tienda solar
-        const cursor = collection.find({ product_store: tiendasConfig.Tienda_Solar.toLowerCase() });
+        const tiendaSolar = tiendasConfig.Tienda_Solar.toLowerCase();
+        const cursor = collection.find({ product_store: tiendaSolar });
 
-        // Crear un nuevo workbook de Excel
         const workbook = new ExcelJS.Workbook();
-        // Ponerle un nombre a la hoja de trabajo con formato "comp_prod_YYYY-MM-DD"
         const worksheet = workbook.addWorksheet(`Competidores ${new Date().toISOString().split('T')[0]}`);
 
-        // Definir encabezados de columnas
         const columns = [
             { header: 'Productos', key: 'Product_Name' },
-            { header: tiendasConfig.Tienda_Solar, key: tiendasConfig.Tienda_Solar },
-            ...Object.values(tiendasConfig).filter(tienda => tienda !== tiendasConfig.Tienda_Solar).map(tienda => ({ header: tienda, key: tienda }))
+            { header: tiendaSolar, key: tiendaSolar },
+            ...Object.values(tiendasConfig).filter(tienda => tienda !== tiendaSolar).map(tienda => ({ header: tienda, key: tienda }))
         ];
 
         worksheet.columns = columns;
 
-        // Llenar el worksheet con datos
-        const tiendaSolarProductos = await cursor.toArray();
         const allTiendasProductos = await collection.find({}).toArray();
 
-        await Promise.all(tiendaSolarProductos.map(async productoSolar => {
+        const processProduct = async (productoSolar) => {
             const rowData = { Product_Name: productoSolar.product_name };
-            // Aplicar product_url como hyperlink al precio del producto
-            rowData[tiendasConfig.Tienda_Solar] = {
+            rowData[tiendaSolar] = {
                 text: productoSolar.product_price,
                 hyperlink: productoSolar.product_url
             };
 
-            // Verificar si hay al menos un competidor con precio definido
             const hasCompetitorPrice = Object.values(tiendasConfig).some(tienda => {
-                if (tienda !== tiendasConfig.Tienda_Solar) {
+                if (tienda !== tiendaSolar) {
                     const matchingProductos = allTiendasProductos.filter(p =>
                         p.product_store === tienda &&
-                        isSimilarProduct(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
+                        isSimilarProduct(p.product_name, productoSolar.product_name)
                     );
-                    // Si el producto contiene la palabra "Victron" y "MPPT" se subirá el umbral de similitud solamente a número para aumentar la precisión al 100%
-                    const similarityThreshold = normalizeText(productoSolar.product_name).includes('victron') && normalizeText(productoSolar.product_name).includes('mppt') ? 0.985 : 0.9;
+                    const similarityThreshold = normalizeText(productoSolar.product_name).includes('victron') && normalizeText(productoSolar.product_name).includes('mppt') && normalizeText(productoSolar.product_name).includes('Mono') && normalizeText(productoSolar.product_name).includes('Panel') ? 0.99 : 0.8;
                     const selectedProducto = matchingProductos.find(p =>
                         stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
                     );
@@ -148,39 +168,46 @@ app.post('/generar_excel/', async (req, res) => {
                 return false;
             });
 
-            // Si el producto tiene al menos un precio de competidor, se agrega al excel
             if (hasCompetitorPrice) {
-                Object.values(tiendasConfig).forEach(tienda => {
-                    if (tienda !== tiendasConfig.Tienda_Solar) {
+                for (const tienda of Object.values(tiendasConfig)) {
+                    if (tienda !== tiendaSolar) {
                         const matchingProductos = allTiendasProductos.filter(p =>
                             p.product_store === tienda &&
-                            isSimilarProduct(normalizeText(p.product_name), normalizeText(productoSolar.product_name))
+                            isSimilarProduct(p.product_name, productoSolar.product_name)
                         );
 
-                        const similarityThreshold = 0.9;
+                        let similarityThreshold = 0;
+
+                        // SI el producto contiene la palabra huawei o pylontech, se establece un umbral de similitud mayor
+                        if(normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech')){
+                            similarityThreshold = 0.5; // Umbral de similitud para productos
+                        } else{
+                            similarityThreshold = 0.5;
+                        }
                         const selectedProducto = matchingProductos.find(p =>
                             stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
                         );
-                        // Aplicar product_url como hyperlink al precio del producto
+
                         if (selectedProducto && selectedProducto.product_price !== null && selectedProducto.product_price !== undefined) {
+                            // Si selectedProducto.product_price es un número, se agrega como un hipervínculo
                             rowData[tienda] = {
-                                text: selectedProducto.product_price,
-                                hyperlink: selectedProducto.product_url
+                                text: selectedProducto.product_price ? selectedProducto.product_price : 'Sin precio / Stock',
+                                hyperlink: selectedProducto.product_url ? selectedProducto.product_url : ''
                             };
                         }
                     }
-                });
+                }
 
-                // Agregar la fila al worksheet
                 worksheet.addRow(rowData);
             }
-        }));
+        };
 
-        // Crear un archivo Excel con el nombre "productos_comp_YYYY-MM-DD_HH:MM:SS.xlsx"
+        const tiendaSolarProductos = await cursor.toArray();
+        await Promise.all(tiendaSolarProductos.map(processProduct));
+
         const filePath = `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
         await workbook.xlsx.writeFile(filePath);
 
-        // Call the Python script to apply styles
         const pythonScript = 'apply_style.py';
         exec(`python3 ${pythonScript} ${filePath}`, (error, stdout, stderr) => {
             if (error) {
@@ -189,9 +216,7 @@ app.post('/generar_excel/', async (req, res) => {
                 return;
             }
 
-            // Send the file for download as Informe_Competidores_YYYY-MM-DD_HH:MM:SS.xlsx en lugar de una T en la fecha se pone un guion bajo
-            res.download(filePath, `Informe_Competidores_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
-                // Eliminar el archivo después de la descarga
+            res.download(filePath, `Informe_Competidores_${new Date().toISOString().replace(/[-:T]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
                 fs.unlinkSync(filePath);
             });
         });

@@ -11,7 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "anchor": "^1.4.1",
+    "axios": "^1.6.7",
     "body-parser": "^1.20.2",
+    "cheerio": "^1.0.0-rc.12",
     "compromise": "^14.11.2",
     "dotenv": "^16.4.1",
     "exceljs": "^4.4.0",
@@ -22,6 +24,8 @@
     "natural": "^6.10.4",
     "path": "^0.12.7",
     "puppeteer": "^22.0.0",
+    "sleep": "^6.3.0",
+    "sleep-promise": "^9.1.0",
     "string-similarity": "^4.0.4"
   }
 }
