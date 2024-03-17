@@ -20,7 +20,7 @@ async function sendToDatabase(products) {
     try {
         const client = await mongodb.MongoClient.connect(DEV_DB);
         const db = client.db('products_db_test');
-        const collection = db.collection('products_col_test_clean');
+        const collection = db.collection('products_col_prod_1');
 
         // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
         products = products.map(product => {

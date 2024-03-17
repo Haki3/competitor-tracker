@@ -9,6 +9,8 @@ async function rebacasMain() {
         const inverters = await rebacasScrapper('https://www.rebacas.com/19-inversores?resultsPerPage=99999', 'inverter');
         const batteries = await rebacasScrapper('https://www.rebacas.com/49-baterias-solares?resultsPerPage=99999', 'battery');
 
+        console.log('TOTAL PRODUCTS BY TYPE FROM REBACAS :','panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'kits:', kits.length);
+
         const products = panels.concat(kits,inverters, batteries);
 
         await sendToDatabase(products);

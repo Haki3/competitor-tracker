@@ -3,3 +3,9 @@ node_modules/
 
 # Ignorar archivos de entorno
 .env
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+

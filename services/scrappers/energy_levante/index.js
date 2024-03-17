@@ -16,7 +16,7 @@ async function energyLevanteMain() {
 
         await sendToDatabase(products);
     } catch (error) {
-        console.error('Error in rebacasMain', error);
+        console.error('Error in energyLevanteMain', error);
     }
 
 }
@@ -24,8 +24,11 @@ async function energyLevanteMain() {
 async function energyLevanteScrapper(url, product_type) {
     const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
     const page = await browser.newPage();
-    await page.goto(url);
-
+    try {
+        await page.goto(url);
+    } catch (error) {
+        console.error('Error waiting for the page to load', error);
+    }
     if(product_type === 'inverter') {
         // Esperar 10 segundos para que cargue el contenido
         await time(10000);

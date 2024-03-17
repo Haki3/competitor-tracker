@@ -80,17 +80,16 @@ const isSimilarProduct = (name1, name2) => {
 
     // Calcular la proporción de palabras clave compartidas
     const similarityScore = commonKeywords.length / Math.min(keywords1.length, keywords2.length);
-
+    
+    const similarityThreshold = 0.9;
+    
     // Si el nombre contiene huawei console log
-    if(normalized1.includes('huawei')){
-        console.log('Nombre 1:', normalized1);
-    }
-    if(normalized2.includes('huawei')){
-        console.log('Nombre 2:', normalized2);
+    if(normalized1.includes('huawei') || normalized2.includes('huawei')){
+        console.log('Similarity Score:', similarityScore, 'Name 1:', normalized1, 'Name 2:', normalized2);
     }
 
     // Establecer un umbral de similitud deseado
-    const similarityThreshold = 0.8;
+    
 
     return similarityScore > similarityThreshold;
 };
@@ -111,7 +110,9 @@ const updateCompetitorPeriodically = async () => {
     }
 };
 
+// Call the function to update competitors every 15 minutes
 updateCompetitorPeriodically();
+// setInterval(updateCompetitorPeriodically, 900000);
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
@@ -123,6 +124,7 @@ app.get('/last_update', (req, res) => {
 });
 
 app.post('/descarga/', async (req, res) => {
+    console.log('Request received');
     try {
         await client.connect();
 
@@ -180,9 +182,14 @@ app.post('/descarga/', async (req, res) => {
 
                         // SI el producto contiene la palabra huawei o pylontech, se establece un umbral de similitud mayor
                         if(normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech')){
-                            similarityThreshold = 0.5; // Umbral de similitud para productos
+                            similarityThreshold = .55; // Umbral de similitud para productos
+
+                        } else if(normalizeText(productoSolar.product_name).includes('fronius') || normalizeText(productoSolar.product_name).includes('symo') || normalizeText(productoSolar.product_name).includes('primo')){
+                            similarityThreshold = .8;
+                        } else if(normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')){
+                            similarityThreshold = .9;
                         } else{
-                            similarityThreshold = 0.5;
+                            similarityThreshold = .7;
                         }
                         const selectedProducto = matchingProductos.find(p =>
                             stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
@@ -205,8 +212,13 @@ app.post('/descarga/', async (req, res) => {
         const tiendaSolarProductos = await cursor.toArray();
         await Promise.all(tiendaSolarProductos.map(processProduct));
 
+        console.log('Writing file...');
+
         const filePath = `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
         await workbook.xlsx.writeFile(filePath);
+
+        console.log('File written');
+        console.log('Applying styles...');
 
         const pythonScript = 'apply_style.py';
         exec(`python3 ${pythonScript} ${filePath}`, (error, stdout, stderr) => {

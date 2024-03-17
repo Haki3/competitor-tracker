@@ -31,10 +31,13 @@ async function atersaScrapper(url, product_type) {
     while (true) {
         const product_name_xpath =              `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
         const product_name_xpath_fallback =     `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
+        const product_name_xpath_fallback_2 =   `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
         const product_price_xpath =             `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
         const product_price_xpath_fallback =    `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
         const product_price_xpath_fallback_2 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
         const product_price_xpath_fallback_3 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
+        const product_price_xpath_fallback_4 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
+        const product_price_xpath_fallback_5 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
         
         let product_name = await page.evaluate((xpath) => {
             const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -46,6 +49,13 @@ async function atersaScrapper(url, product_type) {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, product_name_xpath_fallback);
+        }
+
+        if (!product_name) {
+            product_name = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.textContent : null;
+            }, product_name_xpath_fallback_2);
         }
 
         let product_price = await page.evaluate((xpath) => {
@@ -71,6 +81,21 @@ async function atersaScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }, product_price_xpath_fallback_3);
         }
+
+        if (!product_price) {
+            product_price = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.textContent : null;
+            }, product_price_xpath_fallback_4);
+        }
+
+        if (!product_price) {
+            product_price = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.textContent : null;
+            }, product_price_xpath_fallback_5);
+        }
+
         // Get the href linked to the product
         let product_url = await page.evaluate((i) => {
             const element = document.evaluate(`/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]`, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;

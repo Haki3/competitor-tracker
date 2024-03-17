@@ -70,15 +70,20 @@ async function almacenFotovoltaicoScrapper(url, product_type) {
 
             // Navigate to product url to obtain full name 
             if(product_url !== null) {
-                await page.goto(product_url);
-                product_name = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }
-                , product_name_inner_xpath);
+                try {
+                    await page.goto(product_url);
+                    product_name = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent : null;
+                    }
+                    , product_name_inner_xpath);
 
-                // Navigate back to the main page
-                await page.goBack();    
+                    // Navigate back to the main page
+                    await page.goBack(); 
+                } catch (error) {
+                    console.error('Error navigating to product url', error);
+                    continue;
+                }   
             } else {
                 product_name = product_name_fake;
             }

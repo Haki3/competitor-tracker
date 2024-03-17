@@ -1,6 +1,6 @@
 # apply_styles.py
 import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side, NamedStyle
 from openpyxl.utils import get_column_letter
 
 def apply_styles(file_path):
@@ -9,6 +9,7 @@ def apply_styles(file_path):
 
     # Definir estilos
     orange_fill = PatternFill(start_color="FF9900", end_color="FF9900", fill_type="solid")
+    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
     gray_fill = PatternFill(start_color="EFEFEF", end_color="EFEFEF", fill_type="solid")
     bold_font = Font(bold=True, name="Poppins")
     header_font = Font(bold=True, name="Poppins", size=12)
@@ -56,6 +57,25 @@ def apply_styles(file_path):
             cell.font = Font(name="Poppins")
             cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
+    # Definir estilos adicionales
+    red_font = Font(color="FF0000", name="Poppins")
+    red_bck_bold_font = Font(color="FF0000", bold=True, name="Poppins")
+
+    # Aplicar estilos a las celdas correspondientes
+    for row in worksheet.iter_rows(min_row=2):
+        tienda_solar_price_cell = row[1]
+        tienda_solar_price = tienda_solar_price_cell.value
+
+        for cell in row[2:]:
+            if cell.value is not None and tienda_solar_price is not None:
+                if cell.value < tienda_solar_price:
+                    # Poner fondo rojo y texto en negrita
+                    tienda_solar_price_cell.fill = red_fill
+                    tienda_solar_price_cell.font  = bold_font
+                    
+                    break  # No es necesario seguir buscando si ya se encontró un precio más barato
+
+    # Guardar los cambios en el archivo Excel
     workbook.save(file_path)
 
 if __name__ == "__main__":
