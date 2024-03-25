@@ -1,22 +1,23 @@
 # Utiliza la imagen base de Node.js tipo alpine
 FROM node:alpine
 
-# Instala Chromium y sus dependencias
+# Instala Chromium y sus dependencias con el usuario root
+USER root
 RUN apk add --no-cache chromium
 
 # Establece la variable de entorno para Puppeteer
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Instala las dependencias de Python
+# Instala las dependencias de Python con el usuario root
 RUN apk add --no-cache python3 py3-pip
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Cambiar el propietario y los permisos del directorio de salida
+# Cambiar el propietario y los permisos del directorio de salida con el usuario node
 RUN mkdir /app/output && \
-    chown node:node /app/output && \
-    chmod -R 777 /app/output
+    chmod -R 777 /app/output && \
+    chown -R node:node /app    # Cambia el propietario de /app al usuario node
 
 # Copia los archivos de la aplicación incluyendo package.json
 COPY package.json package-lock.json* ./
@@ -27,9 +28,20 @@ RUN npm install
 # Copia el resto de los archivos de la aplicación
 COPY . .
 
+# Cambia al usuario node para las siguientes instrucciones
+USER node
+
 # Instala y configura el entorno virtual de Python
-RUN python3 -m venv /venv
-ENV PATH="/venv/bin:$PATH"
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
+# Cambia los permisos del directorio del entorno virtual
+USER root
+RUN chmod -R 777 /app/venv && \
+    chown -R node:node /app/venv
+
+# Cambia nuevamente al usuario node
+USER node
 
 # Copia el archivo requirements.txt al contenedor
 COPY requirements.txt .
