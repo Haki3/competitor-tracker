@@ -1,5 +1,5 @@
-# Utiliza la imagen base de Node.js tipo alpine
-FROM node:alpine
+# Utiliza la imagen base de Node.js 16
+FROM node:19-alpine
 
 # Instala Chromium y sus dependencias con el usuario root
 USER root
