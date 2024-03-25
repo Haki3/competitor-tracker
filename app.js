@@ -110,8 +110,8 @@ const updateCompetitorPeriodically = async () => {
     }
 };
 
-// Call the function to update competitors every 6 hours
-updateCompetitorPeriodically();
+// Call the function to update competitors every 6 hours , first time after 10 min after the server starts
+setTimeout(updateCompetitorPeriodically, 10 * 60 * 1000);
 setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
 
 app.get('/', (req, res) => {
