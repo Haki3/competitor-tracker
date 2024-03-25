@@ -6,6 +6,5 @@ node_modules/
 
 # Docker
 .dockerignore
-Dockerfile
 docker-compose.yml
 
