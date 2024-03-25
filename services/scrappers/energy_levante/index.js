@@ -22,7 +22,7 @@ async function energyLevanteMain() {
 }
 
 async function energyLevanteScrapper(url, product_type) {
-    const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     try {
         await page.goto(url);

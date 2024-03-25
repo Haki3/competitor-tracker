@@ -21,7 +21,7 @@ async function rebacasMain() {
 }
 
 async function rebacasScrapper(url, product_type) {
-    const browser = await puppeteer.launch({ignoreHTTPSErrors: true});
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.goto(url);
 

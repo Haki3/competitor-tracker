@@ -38,8 +38,8 @@ async function almacenFotovoltaicoScrapper(url, product_type) {
 
     let pageNum = 1;
     let products = [];
-
-    const browser = await puppeteer.launch({ ignoreHTTPSErrors: true });
+    // No sandbox mode to avoid issues with the browser
+    const browser = await puppeteer.launch({ ignoreHTTPSErrors: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
 
     while (true) {

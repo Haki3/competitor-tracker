@@ -40,7 +40,7 @@ async function autosolarScrapper(url, product_type) {
 
     let pageNum = 1;
     let isLastPage = false;
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
     while (!isLastPage) {
         const page = await browser.newPage();
