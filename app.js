@@ -110,9 +110,9 @@ const updateCompetitorPeriodically = async () => {
     }
 };
 
-// Call the function to update competitors every 15 minutes
+// Call the function to update competitors every 6 hours
 updateCompetitorPeriodically();
-// setInterval(updateCompetitorPeriodically, 900000);
+setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
@@ -181,15 +181,15 @@ app.post('/descarga/', async (req, res) => {
                         let similarityThreshold = 0;
 
                         // SI el producto contiene la palabra huawei o pylontech, se establece un umbral de similitud mayor
-                        if(normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech')){
+                        if(normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech') || normalizeText(productoSolar.product_name).includes('hyundai')) {
                             similarityThreshold = .55; // Umbral de similitud para productos
-
+                        
                         } else if(normalizeText(productoSolar.product_name).includes('fronius') || normalizeText(productoSolar.product_name).includes('symo') || normalizeText(productoSolar.product_name).includes('primo')){
-                            similarityThreshold = .8;
+                            similarityThreshold = .85;
                         } else if(normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')){
-                            similarityThreshold = .9;
+                            similarityThreshold = .75;
                         } else{
-                            similarityThreshold = .7;
+                            similarityThreshold = .2;
                         }
                         const selectedProducto = matchingProductos.find(p =>
                             stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold
@@ -213,8 +213,7 @@ app.post('/descarga/', async (req, res) => {
         await Promise.all(tiendaSolarProductos.map(processProduct));
 
         console.log('Writing file...');
-
-        const filePath = `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
+        const filePath = `./output/productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
         await workbook.xlsx.writeFile(filePath);
 
         console.log('File written');

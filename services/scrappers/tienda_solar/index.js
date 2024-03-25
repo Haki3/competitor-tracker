@@ -89,7 +89,7 @@ async function tiendaSolarScrapper(url, product_type) {
         }
 
         // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
-        product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
+        product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica|eléctrico|ye|Alto Voltaje)/gi, '').trim();
 
         // Eliminar espacios al principio y al final
         product.product_name = product.product_name.trim();  

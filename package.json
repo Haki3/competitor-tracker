@@ -24,7 +24,6 @@
     "natural": "^6.10.4",
     "path": "^0.12.7",
     "puppeteer": "^22.0.0",
-    "sleep": "^6.3.0",
     "sleep-promise": "^9.1.0",
     "string-similarity": "^4.0.4"
   }

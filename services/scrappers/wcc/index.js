@@ -135,6 +135,7 @@ async function inverterScrapper(url, product_type) {
 
         for (let i = 1; ; i++) {
             const productNameXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3`;
+            const productNameXPath2 =`/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[1]/h3 `;
             const productPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section[4]/div[2]/div/div[2]/div/div/div/div/section/div/ul/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
             const productPriceXPath2 = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[3]/div/div/div/div/section/div/ul[1]/li[${i}]/div/div/div/a/div/div/div[2]/div/div/span[2]`;
             const innerProductPriceXPath = `/html/body/div[1]/div/div[3]/div/main/div/div/div/div[2]/div/div/div/section/div[2]/div/div[1]/div/div/article/div[1]/section[2]/div[5]/div/div/div/span[1]`

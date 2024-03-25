@@ -9,14 +9,14 @@ const energyLevanteMain = require('../../services/scrappers/energy_levante');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
-        // 'tienda_solar': tiendaSolarMain,
-        // 'atersa': atersaMain,
-        // 'autosolar': autosolarMain,
-        // 'supermercadosolar': supermercadosolarMain,
-        // 'wcc': wccSolarMain,
-        // 'almacen_fotovoltaico': almacenFotovoltaicoMain,
-        // 'rebacas': rebacasMain,
-        // 'energy_levante': energyLevanteMain
+        'tienda_solar': tiendaSolarMain,
+        'atersa': atersaMain,
+        'autosolar': autosolarMain,
+        'supermercadosolar': supermercadosolarMain,
+        'wcc': wccSolarMain,
+        'almacen_fotovoltaico': almacenFotovoltaicoMain,
+        'rebacas': rebacasMain,
+        'energy_levante': energyLevanteMain
     };
 
     if (scrappers[parametro]) {
