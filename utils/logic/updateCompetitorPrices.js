@@ -9,7 +9,7 @@ const energyLevanteMain = require('../../services/scrappers/energy_levante');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
-        // 'tienda_solar': tiendaSolarMain,
+        'tienda_solar': tiendaSolarMain,
         'atersa': atersaMain,
         'autosolar': autosolarMain,
         'supermercadosolar': supermercadosolarMain,

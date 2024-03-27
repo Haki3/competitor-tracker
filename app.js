@@ -223,7 +223,7 @@ app.post('/descarga/', async (req, res) => {
         exec(`python3 ${pythonScript} ${filePath}`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error applying styles: ${stderr}`);
-                res.status(500).send('Error en el servidor');
+                res.status(500).send('Error en el servidor al aplicar estilos');
                 return;
             }
 
@@ -233,7 +233,7 @@ app.post('/descarga/', async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Error en el servidor');
+        res.status(500).send('Error en el servidor : ' + error);
     } finally {
         await client.close();
     }
