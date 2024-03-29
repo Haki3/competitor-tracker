@@ -1,5 +1,5 @@
 # Utiliza la imagen base de Node.js 16
-FROM --platform=linux/amd64 node:latest
+FROM node:alpine
 
 # Instala Chromium y sus dependencias
 RUN apk add --no-cache chromium
