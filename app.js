@@ -213,7 +213,7 @@ app.post('/descarga/', async (req, res) => {
         await Promise.all(tiendaSolarProductos.map(processProduct));
 
         console.log('Writing file...');
-        const filePath = `./output/productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
+        const filePath = `productos_comp_${new Date().toISOString().replace(/[-:]/g, '_').replace(/\.\d+/, '')}.xlsx`;
         await workbook.xlsx.writeFile(filePath);
 
         console.log('File written');
