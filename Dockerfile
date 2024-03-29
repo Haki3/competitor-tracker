@@ -1,5 +1,5 @@
 # Utiliza la imagen base de Node.js 16
-FROM --platform=linux/amd64 node:16-alpine
+FROM --platform=linux/amd64 node:latest
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
