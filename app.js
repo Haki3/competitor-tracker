@@ -12,7 +12,7 @@ const { exec } = require('child_process');
 const { DEV_DB, PROD_DB } = process.env;
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
