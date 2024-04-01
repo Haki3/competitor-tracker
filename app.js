@@ -226,11 +226,15 @@ app.post('/descarga/', async (req, res) => {
                 res.status(500).send('Error en el servidor al aplicar estilos');
                 return;
             }
+        });
 
+        // Configurar la descarga automática del archivo en el cliente
+        setTimeout(() => {
             res.download(filePath, `Informe_Competidores_${new Date().toISOString().replace(/[-:T]/g, '_').replace(/\.\d+/, '')}.xlsx`, (err) => {
                 fs.unlinkSync(filePath);
             });
-        });
+        }, 1000); // Espera 1 segundo antes de iniciar la descarga
+        
     } catch (error) {
         console.error(error);
         res.status(500).send('Error en el servidor : ' + error);
