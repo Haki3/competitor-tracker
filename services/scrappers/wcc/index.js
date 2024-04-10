@@ -14,7 +14,7 @@ async function wccSolarMain() {
     console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
     console.log('wccSolar prices updated. Sending to database...');
 
-    await sendToDatabase(products);
+    // await sendToDatabase(products);
 }
 
 async function panelScrapper(url, product_type) {
