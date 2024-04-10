@@ -258,6 +258,10 @@ const genReportOnStart = async () => {
     }
 }
 
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/ui/dashboard/index.html');
+});
+
 // Iniciar el bot de Telegram
 bot.on('polling_error', (error) => {
     console.error('Polling error:', error);
