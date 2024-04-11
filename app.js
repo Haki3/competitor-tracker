@@ -262,6 +262,10 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
 });
 
+app.listen(process.env.PORT || 3000, () => {
+    console.log('The tienda solar bot is running! 🚀');
+});
+
 // Iniciar el bot de Telegram
 bot.on('polling_error', (error) => {
     console.error('Polling error:', error);
