@@ -3,6 +3,7 @@ dotenv.config();
 const express = require('express');
 const app = express();
 const TelegramBot = require('node-telegram-bot-api');
+const bodyParser = require('body-parser');
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 const stringSimilarity = require('string-similarity');
@@ -11,6 +12,8 @@ const { updateCompetitor } = require('./utils/logic/updateCompetitorPrices');
 const { exec } = require('child_process');
 
 const { DEV_DB, PROD_DB, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID } = process.env;
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const bot = new TelegramBot(TELEGRAM_TOKEN);
 const url = process.env.NODE_ENV === 'development' ? DEV_DB : PROD_DB;
