@@ -82,7 +82,7 @@ const isSimilarProduct = (name1, name2) => {
     // Calcular la proporción de palabras clave compartidas
     const similarityScore = commonKeywords.length / Math.min(keywords1.length, keywords2.length);
 
-    const similarityThreshold = 0.9;
+    const similarityThreshold = 0.795;
 
     // Si el nombre contiene huawei console log
     if (normalized1.includes('huawei') || normalized2.includes('huawei')) {
@@ -136,6 +136,11 @@ const updateCompetitorPeriodically = async () => {
 // Llamar a la función para actualizar competidores cada 6 horas
 updateCompetitorPeriodically();
 setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
+
+// LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
+setInterval(() => {
+    updateCompetitor('almacen_fotovoltaico');
+}, 2 * 60 * 60 * 1000);
 
 // Iniciar el bot de Telegram
 bot.on('polling_error', (error) => {
@@ -215,13 +220,17 @@ const genReportOnStart = async () => {
                         if (normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech') || normalizeText(productoSolar.product_name).includes('hyundai')) {
                             similarityThreshold = .55; // Umbral de similitud para productos
                         } else if (normalizeText(productoSolar.product_name).includes('hyundai')) {
-                            similarityThreshold = .55;
+                            similarityThreshold = .4;
                         } else if (normalizeText(productoSolar.product_name).includes('fronius') || normalizeText(productoSolar.product_name).includes('symo') || normalizeText(productoSolar.product_name).includes('primo')) {
-                            similarityThreshold = .8;
+                            // si la tienda es rebacas y el producto es fronius, symo o primo
+                            if (productoSolar.product_store === 'rebacas') {
+                                similarityThreshold = .1;
+                            }
+                            similarityThreshold = .91;
                         } else if (normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')) {
-                            similarityThreshold = .75;
+                            similarityThreshold = .7;
                         } else {
-                            similarityThreshold = .45;
+                            similarityThreshold = .4;
                         }
                         const selectedProducto = matchingProductos.find(p =>
                             stringSimilarity.compareTwoStrings(normalizeText(p.product_name), normalizeText(productoSolar.product_name)) > similarityThreshold

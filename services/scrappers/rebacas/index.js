@@ -13,7 +13,7 @@ async function rebacasMain() {
 
         const products = panels.concat(kits,inverters, batteries);
 
-        await sendToDatabase(products);
+        // await sendToDatabase(products);
     } catch (error) {
         console.error('Error in rebacasMain', error);
     }
@@ -26,13 +26,13 @@ async function rebacasScrapper(url, product_type) {
     await page.goto(url);
 
     // Time sleep of 5 seconds to wait for the page to load
-    await time(7000);
+    await time(10000);
     // Try to scroll down for a few times to load all the products
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 10; i++) {
         await page.evaluate(() => {
             window.scrollBy(0, window.innerHeight);
         });
-        await time(1000);
+        await time(4000);
     }
 
     let i = 1;
@@ -76,7 +76,10 @@ async function rebacasScrapper(url, product_type) {
 
         return product;
     });
-
+    // console log inverter
+    if (product_type === 'inverter') {
+        console.log('Inverter:', products);
+    }
     await browser.close();
     return products;
 
