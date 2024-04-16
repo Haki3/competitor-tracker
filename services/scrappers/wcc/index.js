@@ -22,7 +22,7 @@ async function panelScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     let hasProducts = true;
 
     while (hasProducts) {
@@ -103,7 +103,7 @@ async function inverterScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     let hasProducts = true;
 
     while (hasProducts) {
@@ -184,7 +184,7 @@ async function batterySolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     let hasProducts = true;
 
     while (hasProducts) {
@@ -267,7 +267,7 @@ async function kitsSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
     let hasProducts = true;
 
     while (hasProducts) {
@@ -355,7 +355,7 @@ async function chargeRegulatorSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
 
     while (true) {
         const page = await browser.newPage();
@@ -435,7 +435,7 @@ async function structuresSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
 
     while (true) {
         const page = await browser.newPage();
@@ -515,7 +515,7 @@ async function pumpingSystemsSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })();
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
 
     while (true) {
         const page = await browser.newPage();
