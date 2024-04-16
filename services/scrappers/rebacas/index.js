@@ -13,7 +13,7 @@ async function rebacasMain() {
 
         const products = panels.concat(kits,inverters, batteries);
 
-        // await sendToDatabase(products);
+        await sendToDatabase(products);
     } catch (error) {
         console.error('Error in rebacasMain', error);
     }

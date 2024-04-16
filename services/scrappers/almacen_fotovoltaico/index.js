@@ -15,7 +15,7 @@ async function almacenFotovoltaicoMain() {
     console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'kits:', kits.length, 'structures:', structures.length, 'car_chargers:', car_chargers.length, 'pumping_systems:', pumping_systems.length);
     console.log('Products:', JSON.stringify(products, null, 2));
     console.log('AlmacenFotovoltaico prices updated. Sending to database...')
-    // await sendToDatabase(products);
+    await sendToDatabase(products);
 
 }
 
