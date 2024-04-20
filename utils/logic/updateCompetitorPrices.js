@@ -12,7 +12,7 @@ async function updateCompetitor(parametro) {
         'tienda_solar': tiendaSolarMain,
         'atersa': atersaMain,
         'autosolar': autosolarMain,
-        'supermercadosolar': supermercadosolarMain,
+        // 'supermercadosolar': supermercadosolarMain,
         'wcc': wccSolarMain,
         'almacen_fotovoltaico': almacenFotovoltaicoMain,
         'rebacas': rebacasMain,
