@@ -126,7 +126,6 @@ const updateCompetitorPeriodically = async () => {
         for (const tienda of Object.values(tiendasConfig)) {
             await updateCompetitor(tienda);
         }
-        await genReportOnStart();
         console.log('Competitors updated and sent via Telegram');
     } catch (error) {
         console.error('Error updating competitors:', error);
@@ -136,11 +135,11 @@ const updateCompetitorPeriodically = async () => {
 // Llamar a la función para actualizar competidores cada 6 horas
 updateCompetitorPeriodically();
 setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
-
+setInterval(genReportOnStart, 6 * 60 * 60 * 1000);
 // LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
 setInterval(() => {
     updateCompetitor('almacen_fotovoltaico');
-}, 2 * 60 * 60 * 1000);
+}, 3 * 60 * 60 * 1000);
 
 // Iniciar el bot de Telegram
 bot.on('polling_error', (error) => {
