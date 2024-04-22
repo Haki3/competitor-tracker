@@ -132,31 +132,6 @@ const updateCompetitorPeriodically = async () => {
     }
 };
 
-// Llamar a la función para actualizar competidores cada 6 horas
-updateCompetitorPeriodically();
-setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
-setInterval(genReportOnStart, 6 * 60 * 60 * 1000);
-// LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
-setInterval(() => {
-    updateCompetitor('almacen_fotovoltaico');
-}, 3 * 60 * 60 * 1000);
-
-// Iniciar el bot de Telegram
-bot.on('polling_error', (error) => {
-    console.error('Polling error:', error);
-});
-
-// Función para manejar la ruta /poweron y ejecutar la actualización de competidores y enviar el informe al arrancar
-app.get('/poweron', async (req, res) => {
-    try {
-        updateCompetitorPeriodically();
-        res.status(200).send('Bot started successfully! 🚀');
-    } catch (error) {
-        console.error('Error updating competitors and sending report on startup:', error);
-        res.status(500).send('Error updating competitors and sending report on startup');
-    }
-});
-
 const genReportOnStart = async () => {
     const chatId = TELEGRAM_CHAT_ID; // Obtener el chatId del archivo .env
     // Generando informe de precios de competidores mensaje telegram
@@ -277,6 +252,31 @@ const genReportOnStart = async () => {
         await client.close();
     }
 }
+
+// Llamar a la función para actualizar competidores cada 6 horas
+updateCompetitorPeriodically();
+setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
+setInterval(genReportOnStart, 6 * 60 * 60 * 1000);
+// LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
+setInterval(() => {
+    updateCompetitor('almacen_fotovoltaico');
+}, 3 * 60 * 60 * 1000);
+
+// Iniciar el bot de Telegram
+bot.on('polling_error', (error) => {
+    console.error('Polling error:', error);
+});
+
+// Función para manejar la ruta /poweron y ejecutar la actualización de competidores y enviar el informe al arrancar
+app.get('/poweron', async (req, res) => {
+    try {
+        updateCompetitorPeriodically();
+        res.status(200).send('Bot started successfully! 🚀');
+    } catch (error) {
+        console.error('Error updating competitors and sending report on startup:', error);
+        res.status(500).send('Error updating competitors and sending report on startup');
+    }
+});
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
