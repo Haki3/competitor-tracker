@@ -131,7 +131,7 @@ const updateCompetitorPeriodically = async () => {
         console.log('Competitors updated and sent via Telegram');
     } catch (error) {
         // Enviar mensaje de error al chat de Telegram
-        bot.sendMessage(TELEGRAM_CHAT_ID, 'Error en el servidor: ' + error);
+        bot.sendMessage(-4136351395, 'Error en el servidor: ' + error);
         console.error('Error updating competitors:', error);
     }
 };
