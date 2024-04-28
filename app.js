@@ -30,6 +30,8 @@ const tiendasConfig = {
     AlmacenFotovoltaico: 'almacen_fotovoltaico',
     rebacas: 'rebacas',
     Energy_Levante: 'energy_levante'
+    // Efecto_Solar: 'efecto_solar',
+    // Teknosolar: 'tekno_solar'
 };
 
 // Funciones utils
@@ -128,6 +130,8 @@ const updateCompetitorPeriodically = async () => {
         }
         console.log('Competitors updated and sent via Telegram');
     } catch (error) {
+        // Enviar mensaje de error al chat de Telegram
+        bot.sendMessage(TELEGRAM_CHAT_ID, 'Error en el servidor: ' + error);
         console.error('Error updating competitors:', error);
     }
 };
@@ -255,12 +259,15 @@ const genReportOnStart = async () => {
 
 // Llamar a la función para actualizar competidores cada 6 horas
 updateCompetitorPeriodically();
-setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
-setInterval(genReportOnStart, 6 * 60 * 60 * 1000);
+genReportOnStart();
+// Llamar a la función para enviar el informe al arrancar cada 6 horas
+setInterval(updateCompetitorPeriodically, 8 * 60 * 60 * 1000);
+// Llamar a la función para enviar el informe al arrancar cada 1 horas
+setInterval(genReportOnStart, 3 * 60 * 60 * 1000);
 // LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
-setInterval(() => {
-    updateCompetitor('almacen_fotovoltaico');
-}, 3 * 60 * 60 * 1000);
+// setInterval(() => {
+//     updateCompetitor('almacen_fotovoltaico');
+// }, 24 * 60 * 60 * 1000);
 
 // Iniciar el bot de Telegram
 bot.on('polling_error', (error) => {
