@@ -1,6 +1,6 @@
 # apply_styles.py
 import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side, NamedStyle
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 
 def apply_styles(file_path):
@@ -64,16 +64,28 @@ def apply_styles(file_path):
     # Aplicar estilos a las celdas correspondientes
     for row in worksheet.iter_rows(min_row=2):
         tienda_solar_price_cell = row[1]
-        tienda_solar_price = tienda_solar_price_cell.value
+        try:
+            tienda_solar_price = float(tienda_solar_price_cell.value)
+        except (TypeError, ValueError):
+            print(f"Valor inválido en la celda {tienda_solar_price_cell.coordinate}: {tienda_solar_price_cell.value}")
+            continue
 
         for cell in row[2:]:
-            if cell.value is not None and tienda_solar_price is not None:
-                if cell.value < tienda_solar_price:
+            if cell.value is not None:
+                try:
+                    cell_value = float(cell.value)
+                except (TypeError, ValueError):
+                    print(f"Valor inválido en la celda {cell.coordinate}: {cell.value}")
+                    continue
+
+                if cell_value < tienda_solar_price:
                     # Poner fondo rojo y texto en negrita
                     tienda_solar_price_cell.fill = red_fill
-                    tienda_solar_price_cell.font  = bold_font
-                    
+                    tienda_solar_price_cell.font = bold_font
                     break  # No es necesario seguir buscando si ya se encontró un precio más barato
+                else:
+                    # No aplicar estilo
+                    pass
 
     # Guardar los cambios en el archivo Excel
     workbook.save(file_path)

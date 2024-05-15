@@ -11,7 +11,7 @@ const { MongoClient } = require('mongodb');
 const { updateCompetitor } = require('./utils/logic/updateCompetitorPrices');
 const { exec } = require('child_process');
 
-const { DEV_DB, PROD_DB, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID } = process.env;
+const { DEV_DB, PROD_DB, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_DEV_CHAT_ID } = process.env;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -41,9 +41,10 @@ const normalizeText = (text) => {
     if (text && typeof text === 'string') {
         let normalizedText = text.toLowerCase();
         palabrasEliminar.forEach(palabra => {
-            normalizedText = normalizedText.replace(new RegExp(palabra, 'g'), '');
+            normalizedText = normalizedText.replace(new RegExp(`\\b${palabra}\\b`, 'g'), '');
         });
-        return normalizedText.replace(/[^a-z0-9]/g, '');
+        normalizedText = normalizedText.replace(/\s+/g, ' ').trim();
+        return normalizedText;
     }
     return text;
 };
@@ -54,44 +55,52 @@ const isExcludedProduct = (name) => {
     return excludedValues.includes(normalized);
 };
 
-const isSimilarProduct = (name1, name2) => {
-    const normalized1 = name1;
-    const normalized2 = name2;
+const isSimilarProduct = (name1, name2, price1, price2) => {
+    const normalized1 = normalizeText(name1);
+    const normalized2 = normalizeText(name2);
 
     if (isExcludedProduct(name1) || isExcludedProduct(name2)) {
         return false;
     }
 
-    // Extraer números del modelo de ambos nombres
+    const priceDifferenceThreshold = 500;
+    const priceDifference = Math.abs(price1 - price2);
+    if (priceDifference > priceDifferenceThreshold) {
+        return false;
+    }
+
+    // Verificar si los nombres contienen "M1" o "L1" para compararlos específicamente
+    const containsM1OrL1 = (name) => name.includes('m1') || name.includes('l1');
+
+    if (containsM1OrL1(normalized1) && containsM1OrL1(normalized2)) {
+        if ((normalized1.includes('m1') && normalized2.includes('l1')) || (normalized1.includes('l1') && normalized2.includes('m1'))) {
+            return false;
+        }
+    }
+
     const numbersName1 = normalized1.match(/\d+/g);
     const numbersName2 = normalized2.match(/\d+/g);
 
-    // Verificar si ambos nombres tienen números de modelo
     if (numbersName1 && numbersName2) {
-        // Convertir números a cadenas y comparar si son iguales
         if (numbersName1.join('') === numbersName2.join('')) {
             return true;
         }
     }
 
-    // Convertir los nombres a listas de palabras clave
     const keywords1 = normalized1.split(' ');
     const keywords2 = normalized2.split(' ');
 
-    // Calcular la intersección de palabras clave
     const commonKeywords = keywords1.filter(keyword => keywords2.includes(keyword));
 
-    // Calcular la proporción de palabras clave compartidas
     const similarityScore = commonKeywords.length / Math.min(keywords1.length, keywords2.length);
 
     const similarityThreshold = 0.795;
 
-    // Si el nombre contiene huawei console log
     if (normalized1.includes('huawei') || normalized2.includes('huawei')) {
-        console.log('Similarity Score:', similarityScore, 'Name 1:', normalized1, 'Name 2:', normalized2);
+        if (normalized1.includes('sun2000') && normalized2.includes('sun2000')) {
+            return similarityScore > 0.9;
+        }
     }
-
-    // Establecer un umbral de similitud deseado
 
     return similarityScore > similarityThreshold;
 };
@@ -131,7 +140,7 @@ const updateCompetitorPeriodically = async () => {
         console.log('Competitors updated and sent via Telegram');
     } catch (error) {
         // Enviar mensaje de error al chat de Telegram
-        bot.sendMessage(-4136351395, 'Error en el servidor: ' + error);
+        bot.sendMessage(TELEGRAM_DEV_CHAT_ID, 'Error en el servidor: ' + error);
         console.error('Error updating competitors:', error);
     }
 };
@@ -172,7 +181,7 @@ const genReportOnStart = async () => {
                 if (tienda !== tiendaSolar) {
                     const matchingProductos = allTiendasProductos.filter(p =>
                         p.product_store === tienda &&
-                        isSimilarProduct(p.product_name, productoSolar.product_name)
+                        isSimilarProduct(p.product_name, productoSolar.product_name, p.product_price, productoSolar.product_price)
                     );
                     const similarityThreshold = normalizeText(productoSolar.product_name).includes('victron') && normalizeText(productoSolar.product_name).includes('mppt') && normalizeText(productoSolar.product_name).includes('Mono') && normalizeText(productoSolar.product_name).includes('Panel') ? 0.99 : 0.8;
                     const selectedProducto = matchingProductos.find(p =>
@@ -189,14 +198,22 @@ const genReportOnStart = async () => {
                     if (tienda !== tiendaSolar) {
                         const matchingProductos = allTiendasProductos.filter(p =>
                             p.product_store === tienda &&
-                            isSimilarProduct(p.product_name, productoSolar.product_name)
+                            isSimilarProduct(p.product_name, productoSolar.product_name, p.product_price, productoSolar.product_price)
                         );
 
                         let similarityThreshold = 0;
 
                         // Establecer umbral de similitud para casos específicos
                         if (normalizeText(productoSolar.product_name).includes('huawei') || normalizeText(productoSolar.product_name).includes('pylontech') || normalizeText(productoSolar.product_name).includes('hyundai')) {
+                            // Si contiene huawei y SUN2000 aplicar un umbral de similitud de 0.9
+                            if (normalizeText(productoSolar.product_name).includes('sun') && normalizeText(productoSolar.product_name).includes('l1')) {
+                                similarityThreshold = 1;
+                            } 
+                            if (normalizeText(productoSolar.product_name).includes('luna')) {
+                                similarityThreshold = .6;
+                            } else {
                             similarityThreshold = .55; // Umbral de similitud para productos
+                            }
                         } else if (normalizeText(productoSolar.product_name).includes('hyundai')) {
                             similarityThreshold = .4;
                         } else if (normalizeText(productoSolar.product_name).includes('fronius') || normalizeText(productoSolar.product_name).includes('symo') || normalizeText(productoSolar.product_name).includes('primo')) {
@@ -206,6 +223,12 @@ const genReportOnStart = async () => {
                             }
                             similarityThreshold = .91;
                         } else if (normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')) {
+                            similarityThreshold = .75;
+                        } else if (normalizeText(productoSolar.product_name).includes('SMA')) {
+                            similarityThreshold = .8;
+                        } else if (normalizeText(productoSolar.product_name).includes('goodwe')) {
+                            similarityThreshold = .7;
+                        } else if (normalizeText(productoSolar.product_name).includes('luna')) {
                             similarityThreshold = .7;
                         } else {
                             similarityThreshold = .4;
@@ -240,6 +263,8 @@ const genReportOnStart = async () => {
                 console.error(`Error applying styles: ${stderr}`);
                 res.status(500).send('Error en el servidor al aplicar estilos');
                 return;
+            } else {
+                console.log(`Styles applied: ${stdout}`);
             }
 
             sendExcelViaTelegram(chatId, filePath); // Pasar el chatId como primer argumento

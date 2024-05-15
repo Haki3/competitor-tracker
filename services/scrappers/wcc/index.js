@@ -216,6 +216,12 @@ async function batterySolarScrapper(url, product_type) {
                 }, productPriceXPath2);
             }
 
+            // Si el precio contiene la palabra Desde, eliminarla
+            if (product_price != null && product_price.includes('Desde')) {
+                product_price = product_price.replace('Desde', '');
+            }
+
+
             if (product_price === null ) {
                 product_price = 'Agotado';
             }
@@ -258,7 +264,6 @@ async function batterySolarScrapper(url, product_type) {
     });
 
     await browser.close();
-    console.log('BATEERIES:', products);
     return products;
 }
 
@@ -325,8 +330,6 @@ async function kitsSolarScrapper(url, product_type) {
                 product_url,
             });
 
-            console.log('PRODUCT:', product_name, product_price, product_url);
-
             hasProducts = true;
         }
         pageNum++;
@@ -347,7 +350,6 @@ async function kitsSolarScrapper(url, product_type) {
     });
 
     await browser.close();
-    console.log('KITS:', products);
     return products;
 }
 
