@@ -111,7 +111,7 @@ const sendExcelViaTelegram = async (chatId, filePath) => {
     try {
         const data = fs.readFileSync(filePath);
         await bot.sendDocument(
-            TELEGRAM_DEV_CHAT_ID,
+            TELEGRAM_CHAT_ID,
             fs.readFileSync(filePath),
             {
                 caption: 'Aqui tienes el informe de precios de competidores! ☀',
