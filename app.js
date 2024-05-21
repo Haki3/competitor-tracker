@@ -10,6 +10,7 @@ const stringSimilarity = require('string-similarity');
 const { MongoClient } = require('mongodb');
 const { updateCompetitor } = require('./utils/logic/updateCompetitorPrices');
 const { exec } = require('child_process');
+const { on } = require('events');
 
 const { DEV_DB, PROD_DB, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_DEV_CHAT_ID } = process.env;
 
@@ -110,7 +111,7 @@ const sendExcelViaTelegram = async (chatId, filePath) => {
     try {
         const data = fs.readFileSync(filePath);
         await bot.sendDocument(
-            TELEGRAM_CHAT_ID,
+            TELEGRAM_DEV_CHAT_ID,
             fs.readFileSync(filePath),
             {
                 caption: 'Aqui tienes el informe de precios de competidores! ☀',
@@ -224,10 +225,12 @@ const genReportOnStart = async () => {
                             similarityThreshold = .91;
                         } else if (normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')) {
                             similarityThreshold = .75;
-                        } else if (normalizeText(productoSolar.product_name).includes('SMA')) {
-                            similarityThreshold = .8;
+                        } else if (normalizeText(productoSolar.product_name).includes('sma')) {
+                            similarityThreshold = .98;
                         } else if (normalizeText(productoSolar.product_name).includes('goodwe')) {
                             similarityThreshold = .7;
+                        } else if (normalizeText(productoSolar.product_name).includes('kostal')) {
+                            similarityThreshold = .9;
                         } else if (normalizeText(productoSolar.product_name).includes('luna')) {
                             similarityThreshold = .7;
                         } else {
@@ -266,7 +269,6 @@ const genReportOnStart = async () => {
             } else {
                 console.log(`Styles applied: ${stdout}`);
             }
-
             sendExcelViaTelegram(chatId, filePath); // Pasar el chatId como primer argumento
         });
 
@@ -283,8 +285,16 @@ const genReportOnStart = async () => {
 }
 
 // Llamar a la función para actualizar competidores cada 6 horas
-updateCompetitorPeriodically();
-genReportOnStart();
+const onStart = async () => {
+    try {
+        await updateCompetitorPeriodically();
+        genReportOnStart();
+    } catch (error) {
+        console.error('Error updating competitors and sending report on startup:', error);
+    }
+}
+onStart();
+
 // Llamar a la función para enviar el informe al arrancar cada 6 horas
 setInterval(updateCompetitorPeriodically, 8 * 60 * 60 * 1000);
 // Llamar a la función para enviar el informe al arrancar cada 1 horas
@@ -302,7 +312,7 @@ bot.on('polling_error', (error) => {
 // Función para manejar la ruta /poweron y ejecutar la actualización de competidores y enviar el informe al arrancar
 app.get('/poweron', async (req, res) => {
     try {
-        updateCompetitorPeriodically();
+        onStart();
         res.status(200).send('Bot started successfully! 🚀');
     } catch (error) {
         console.error('Error updating competitors and sending report on startup:', error);
