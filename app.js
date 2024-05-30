@@ -30,8 +30,8 @@ const tiendasConfig = {
     WccSolar: 'wcc',
     AlmacenFotovoltaico: 'almacen_fotovoltaico',
     rebacas: 'rebacas',
-    Energy_Levante: 'energy_levante'
-    // Efecto_Solar: 'efecto_solar',
+    Energy_Levante: 'energy_levante',
+    Efecto_Solar: 'efecto_solar'
     // Teknosolar: 'tekno_solar'
 };
 
@@ -222,15 +222,29 @@ const genReportOnStart = async () => {
                             if (productoSolar.product_store === 'rebacas') {
                                 similarityThreshold = .1;
                             }
-                            similarityThreshold = .91;
+                            similarityThreshold = .93;
                         } else if (normalizeText(productoSolar.product_name).includes('victron') || normalizeText(productoSolar.product_name).includes('mppt')) {
-                            similarityThreshold = .75;
+                            if (normalizeText(productoSolar.product_name).includes('compact')) {
+                                console.log('Entrando en condicional porque 6: ', normalizeText(productoSolar.product_name));
+                                similarityThreshold = .98;
+                            } else if (normalizeText(productoSolar.product_name).includes('schuko')) {
+                                console.log('Entrando en condicional porque 7: ', normalizeText(productoSolar.product_name));
+                                similarityThreshold = .9;
+                            } else {
+                                similarityThreshold = .75;
+                            }
                         } else if (normalizeText(productoSolar.product_name).includes('sma')) {
                             similarityThreshold = .98;
                         } else if (normalizeText(productoSolar.product_name).includes('goodwe')) {
                             similarityThreshold = .7;
                         } else if (normalizeText(productoSolar.product_name).includes('kostal')) {
                             similarityThreshold = .9;
+                        } else if (normalizeText(productoSolar.product_name).includes('longi')) {
+                            console.log('Entrando en condicional porque : ', normalizeText(productoSolar.product_name));
+                            similarityThreshold = .99;
+                        } else if (normalizeText(productoSolar.product_name).includes('edge')) {
+                            console.log('Entrando en condicional porque : ', normalizeText(productoSolar.product_name));
+                            similarityThreshold = .98;
                         } else if (normalizeText(productoSolar.product_name).includes('luna')) {
                             similarityThreshold = .7;
                         } else {

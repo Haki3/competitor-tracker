@@ -7,7 +7,13 @@ async function atersaMain() {
     const batteries = await atersaScrapper('https://atersa.shop/baterias-solares/', 'battery');
     const car_chargers = await atersaScrapper('https://atersa.shop/cargadores-coche-electrico/', 'car_charger');
     const kits = await atersaScrapper('https://atersa.shop/kits-solares-fotovoltaicos/', 'kit');
-    const charge_regulators = await atersaScrapper('https://atersa.shop/regulacion-y-control/', 'charge_regulator');
+    const mppt_regulators = await atersaScrapper('https://atersa.shop/reguladores-de-carga-mppt/', 'mppt_regulator');
+    const pwm_regulators = await atersaScrapper('https://atersa.shop/reguladores-de-carga-pwm/', 'pwm_regulator');
+    // Crear una constante charge_regulators que sea la concatenación de mppt_regulators y pwm_regulators aplicandoles el product_type charge_regulator
+    const charge_regulators = mppt_regulators.concat(pwm_regulators).map(charge_regulator => {
+        charge_regulator.product_type = 'charge_regulator';
+        return charge_regulator;
+    });
     const structures = await atersaScrapper('https://atersa.shop/estructuras-soporte-paneles-solares/', 'structure');
     const pumping_systems = await atersaScrapper('https://atersa.shop/sistemas-de-bombeo/', 'pumping_system');
 
@@ -148,7 +154,9 @@ async function atersaScrapper(url, product_type) {
             }
             , i);
         }
-
+        if (product_type === 'charge_regulator') {
+            console.log('Product:', product_name, 'Price:', product_price, 'URL:', product_url);
+        }
 
         if (!product_name) {
             break;
