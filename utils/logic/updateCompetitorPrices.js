@@ -7,7 +7,7 @@ const almacenFotovoltaicoMain = require('../../services/scrappers/almacen_fotovo
 const rebacasMain = require('../../services/scrappers/rebacas');
 const energyLevanteMain = require('../../services/scrappers/energy_levante');
 const efectoSolarMain = require('../../services/scrappers/efecto_solar');
-// const teknoSolarMain = require('../../services/scrappers/teknosolar');
+const teknoSolarMain = require('../../services/scrappers/teknosolar');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
@@ -20,7 +20,7 @@ async function updateCompetitor(parametro) {
         'rebacas': rebacasMain,
         'energy_levante': energyLevanteMain,
         'efecto_solar': efectoSolarMain,
-        // 'tekno_solar': teknoSolarMain
+        'teknosolar': teknoSolarMain
     };
 
     if (scrappers[parametro]) {

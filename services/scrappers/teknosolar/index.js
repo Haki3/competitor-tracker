@@ -3,6 +3,7 @@ const time = require('sleep-promise');
 const { sendToDatabase } = require('../../../utils/db');
 
 async function teknosolarMain() {
+    console.log('Scraping teknosolar...');
     try {
         const kits = await teknosolarScrapper('https://www.teknosolar.com/kit-solar-fotovoltaico/', 'kit');
         const panels = await teknosolarScrapper('https://www.teknosolar.com/placas-solares/', 'panel');
@@ -12,11 +13,11 @@ async function teknosolarMain() {
         const car_chargers = await teknosolarScrapper('https://www.teknosolar.com/otros-productos/movilidad-electrica/', 'car_charger');
         const charge_regulators = await teknosolarScrapper('https://www.teknosolar.com/reguladores-de-carga/', 'charge_regulator');
 
-        const products = panels.concat(inverters, batteries,structures, car_chargers, charge_regulators);
+        const products = panels.concat(inverters, batteries,structures, car_chargers, charge_regulators, kits);
 
         console.log('TOTAL PRODUCTS BY TYPE FROM TEKNO SOLAR :','panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'structures:', structures.length, 'car_chargers:', car_chargers.length, 'charge_regulators:', charge_regulators.length);
 
-        // await sendToDatabase(products);
+        await sendToDatabase(products);
     } catch (error) {
         console.error('Error in teknosolarMain', error);
     }
@@ -40,13 +41,18 @@ async function teknosolarScrapper(baseUrl, product_type) {
             break;
         }
         await page.goto(url);
-        await time(3000);
+        await time(5000);
+        // Press ESC to remove the cookie warning
+        await page.keyboard.press('Escape');
+        await time(2000);
 
         let i = 1;
 
         while (true) {
-            const product_name_xpath = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/h3`;
+            const product_name_xpath   = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/h3/a`;
             const product_price_xpath = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/div[2]/span/span/bdi`;
+            const product_price_xpath_2 = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/div[3]/span/ins/span/bdi`;
+            const product_price_xpath_offer = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/div[2]/span/ins/span/bdi`;
             const product_url_xpath = `/html/body/div[3]/div[1]/div[2]/div/div/div[4]/div[${i}]/div/div[3]/h3/a`;
 
             const product_name = await page.evaluate((xpath) => {
@@ -70,22 +76,28 @@ async function teknosolarScrapper(baseUrl, product_type) {
                 }, product_price_xpath);
             }
 
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }, product_price_xpath_2);
+            }
+
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.href : null;
             }, product_url_xpath);
-
-            console.log('product_name:', product_name, 'product_price:', product_price, 'product_url:', product_url);
 
             products.push({ product_name, product_price, product_url });
 
             i++;
         }
 
-        // Si no hay productos en la página actual, salimos del bucle
-        // if (products.length === 0) {
-        //     break;
-        // }
+        const isPageNotFound = await page.evaluate(() => document.body.textContent.includes('ERROR 404'));
+        if (isPageNotFound) {
+            console.log('ERROR 404 found, moving to the next category...');
+            break; // Salta a la siguiente categoría
+        }
 
         currentPage++;
     }
@@ -93,7 +105,7 @@ async function teknosolarScrapper(baseUrl, product_type) {
     // Añadir a cada elemento de products el campo "product_store" con el valor "rebacas" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
     
     products = products.map(product => {
-        product.product_store = 'efecto_solar';
+        product.product_store = 'teknosolar';
         product.product_type = product_type;
         if (typeof product.product_price === 'string') {
             product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
@@ -102,7 +114,6 @@ async function teknosolarScrapper(baseUrl, product_type) {
         return product;
     });
 
-    console.log('Products scraped from teknosolar:', products.length, 'of type', product_type)
     console.log('Last product scraped:', products[products.length - 1]);
 
     await browser.close();

@@ -89,12 +89,14 @@ async function efectoSolarScrapper(baseUrl, product_type) {
     // Añadir a cada elemento de products el campo "product_store" con el valor "rebacas" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
     
     products = products.map(product => {
+        if (typeof product.product_name === 'string') {
+            product.product_name = product.product_name.replace(/\s*\(\d+(,\d+)*\)/g, '');
+        }
         product.product_store = 'efecto_solar';
         product.product_type = product_type;
         if (typeof product.product_price === 'string') {
             product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
         }
-
         return product;
     });
 

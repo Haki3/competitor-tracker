@@ -24,7 +24,7 @@ async function sendToDatabase(products) {
 
         // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
         products = products.map(product => {
-            product.product_name = product.product_name.replace(/(Inversor|de Alto Voltaje|Alto Voltaje|de|Panel|Bateria|Batería|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
+            product.product_name = product.product_name.replace(/(Inversor|de Alto Voltaje|Alto Voltaje|de|Panel|Bateria|Batería|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica|Conexión a Red|Híbrido)/gi, '').trim();
             return product;
         });
 
