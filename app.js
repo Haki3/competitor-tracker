@@ -239,6 +239,10 @@ const genReportOnStart = async () => {
                             similarityThreshold = .98;
                         } else if (normalizeText(productoSolar.product_name).includes('luna')) {
                             similarityThreshold = .7;
+                        } else if (normalizeText(productoSolar.product_name).includes('wp') && normalizeText(productoSolar.product_name).includes('canadian')) {
+                            similarityThreshold = .9;
+                        } else if (normalizeText(productoSolar.product_name).includes('perc')) {
+                            similarityThreshold = .9;
                         } else {
                             similarityThreshold = .4;
                         }
