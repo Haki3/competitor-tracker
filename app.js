@@ -32,7 +32,8 @@ const tiendasConfig = {
     rebacas: 'rebacas',
     Energy_Levante: 'energy_levante',
     Efecto_Solar: 'efecto_solar',
-    Teknosolar: 'teknosolar'
+    Teknosolar: 'teknosolar',
+    Suministrodelsol: 'suministrodelsol'
 };
 
 // Funciones utils
