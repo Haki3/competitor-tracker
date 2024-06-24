@@ -9,6 +9,7 @@ const energyLevanteMain = require('../../services/scrappers/energy_levante');
 const efectoSolarMain = require('../../services/scrappers/efecto_solar');
 const teknoSolarMain = require('../../services/scrappers/teknosolar');
 const suministroSolarMain = require('../../services/scrappers/suministrodelsol');
+const solarFacilMain = require('../../services/scrappers/solarfacil');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
@@ -22,7 +23,8 @@ async function updateCompetitor(parametro) {
         'energy_levante': energyLevanteMain,
         'efecto_solar': efectoSolarMain,
         'teknosolar': teknoSolarMain,
-        'suministrodelsol': suministroSolarMain
+        'suministrodelsol': suministroSolarMain,
+        'solarfacil': solarFacilMain,
     };
 
     if (scrappers[parametro]) {

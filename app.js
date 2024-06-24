@@ -33,7 +33,8 @@ const tiendasConfig = {
     Energy_Levante: 'energy_levante',
     Efecto_Solar: 'efecto_solar',
     Teknosolar: 'teknosolar',
-    Suministrodelsol: 'suministrodelsol'
+    Suministrodelsol: 'suministrodelsol',
+    SolarFacil: 'solarfacil',
 };
 
 // Funciones utils
