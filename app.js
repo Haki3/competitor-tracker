@@ -226,6 +226,8 @@ const genReportOnStart = async () => {
                                 similarityThreshold = .98;
                             } else if (normalizeText(productoSolar.product_name).includes('schuko')) {
                                 similarityThreshold = .9;
+                            } else if (normalizeText(productoSolar.product_name).includes('gx')) {
+                                similarityThreshold = .76;
                             } else {
                                 similarityThreshold = .75;
                             }
