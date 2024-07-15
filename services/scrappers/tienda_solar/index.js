@@ -22,7 +22,11 @@ async function tiendaSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'], timeout: 60000  });
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox'],
+        timeout: 60000,
+        userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    });
 
     while (true) {
         const page = await browser.newPage();
@@ -31,8 +35,8 @@ async function tiendaSolarScrapper(url, product_type) {
         let hasProducts = false;  // Variable para verificar si hay productos en la página actual
 
         for (let i = 1; ; i++) {
-            const productNameXPath = `/html/body/main/section/div[2]/div/div[2]/section/section/div[3]/div/div[1]/div/div[${i}]/div/article/div/div[2]/h3/a`;
-            const productPriceXPath = `/html/body/main/section/div[2]/div/div[2]/section/section/div[3]/div/div[1]/div/div[${i}]/div/article/div/div[2]/div[1]/div[1]/div/span`;
+            const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[3]/article/div[2]/h2/a`;
+            const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[3]/article/div[2]/div[3]/a/span`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -98,7 +102,6 @@ async function tiendaSolarScrapper(url, product_type) {
     await browser.close();
     return uniqueProducts;
 }
-
 
 
 module.exports = tiendaSolarMain;
