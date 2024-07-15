@@ -22,7 +22,11 @@ async function tiendaSolarScrapper(url, product_type) {
     const products = [];
 
     let pageNum = 1;
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'], timeout: 60000  });
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox'],
+        timeout: 60000,
+        userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+    });
 
     while (true) {
         const page = await browser.newPage();
