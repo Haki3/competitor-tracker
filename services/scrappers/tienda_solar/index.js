@@ -35,13 +35,15 @@ async function tiendaSolarScrapper(url, product_type) {
         let hasProducts = false;  // Variable para verificar si hay productos en la página actual
 
         for (let i = 1; ; i++) {
-            const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[3]/article/div[2]/h2/a`;
-            const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[3]/article/div[2]/div[3]/a/span`;
+            const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
+            const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/div[3]/a/span`;
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productNameXPath);
+
+            console.log('Product :' + product_name)
 
             // Si no hay producto, salir del bucle y saltar a la siguiente página
             if (!product_name) {
