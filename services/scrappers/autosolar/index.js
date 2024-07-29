@@ -26,6 +26,8 @@ async function autosolarMain() {
 
         const products = panels.concat(inverters, batteries, car_chargers, charge_regulators,structures, kits);
 
+        console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'car_chargers:', car_chargers.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length);
+
         console.log('Autosolar prices updated. Sending to database...')
 
         await sendToDatabase(products);
@@ -52,7 +54,9 @@ async function autosolarScrapper(url, product_type) {
             let productPriceXPath;
             if (product_type === 'inverter') {
                 productNameXPath =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
-                productUrlXpath =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;    
+                productNameXPath2 =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productUrlXpath =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
+                productUrlXpath2 =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
                 productPriceXPath =         `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[1]`;
@@ -61,21 +65,33 @@ async function autosolarScrapper(url, product_type) {
                 productPriceFallbackXPath5 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
             } else {
                 productNameXPath =          `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
+                productNameXPath2 =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
                 productUrlXpath =           `/html/body/main/div/div[3]/div[1]/div[${i}]/a`;
-                productPriceXPath =           `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
+                productUrlXpath2 =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
+                productPriceXPath =         `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
+                productPriceXPath2 =         `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[1]`;
                 productPriceFallbackXPath3 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
                 productPriceFallbackXPath4 = `/html/body/main/div/div[3]/div[1]/div[${i+1}]/a/div[1]/div[1]`;
                 productPriceFallbackXPath5 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
-
-                
+                productPriceFallbackXPathExtra2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[1]`;
+                productPriceFallbackXPathExtra3 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productPriceFallbackXPathExtra4 = `/html/body/main/div/div[2]/div[1]/div[${i+1}]/a/div[1]/div[1]`;
+                productPriceFallbackXPathExtra5 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
             }
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productNameXPath);
+
+            if (!product_name) {
+                product_name = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }, productNameXPath2);
+            }
 
             if (product_name === null && i === 1) {
                 isLastPage = true; // Si el nombre del producto es null y estamos en el primer producto de la página, marcamos que estamos en la última página
@@ -90,6 +106,7 @@ async function autosolarScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }
             , productPriceXPath);
+
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
@@ -140,11 +157,61 @@ async function autosolarScrapper(url, product_type) {
                 , productPriceFallbackXPath2);
             }
 
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }
+                , productPriceXPath2);
+            }
+
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }
+                , productPriceFallbackXPathExtra2);
+            }
+
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }
+                , productPriceFallbackXPathExtra3);
+            }
+
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }
+                , productPriceFallbackXPathExtra4);
+            }
+
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.textContent : null;
+                }
+                , productPriceFallbackXPathExtra5);
+            }
+
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.href : null;
             }
-            , productUrlXpath);            
+            , productUrlXpath);  
+
+            if (!product_url) {
+                product_url = await page.evaluate((xpath) => {
+                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    return element ? element.href : null;
+                }
+                , productUrlXpath2);
+            }
+            
+            console.log('Product:', product_name, 'Price:', product_price, 'URL:', product_url);
 
             if (product_name === null) {
                 isLastPage = true; // Si el nombre del producto es null, marcamos que estamos en la última página

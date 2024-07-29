@@ -43,8 +43,6 @@ async function tiendaSolarScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }, productNameXPath);
 
-            console.log('Product :' + product_name)
-
             // Si no hay producto, salir del bucle y saltar a la siguiente página
             if (!product_name) {
                 break;
