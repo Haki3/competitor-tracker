@@ -3,12 +3,12 @@ const { sendToDatabase } = require('../../../utils/db');
 
 async function wccSolarMain() {
     const panels = await wccScrapper('https://www.wccsolar.net/paneles-solares', 'panel');
-    const inverters = await wccScrapper('https://www.wccsolar.net/todos-inversores/', 'inverter');
-    const batteries = await wccScrapper('https://www.wccsolar.net/todos-baterias/', 'battery');
-    const kits = await wccScrapper('https://www.wccsolar.net/todos-kits-fotovoltaicos', 'kit');
-    const charge_regulators = await wccScrapper('https://www.wccsolar.net/reguladores', 'charge_regulator');
-    const structures = await wccScrapper('https://www.wccsolar.net/todos-estructuras/', 'structure');
-    const pumping_systems = await wccScrapper('https://www.wccsolar.net/todos-bombas-solares/', 'pumping_system');
+    const inverters = await wccScrapper('https://www.wccsolar.net/inversores-solares/', 'inverter');
+    const batteries = await wccScrapper('https://www.wccsolar.net/baterias-solares/', 'battery');
+    const kits = await wccScrapper('https://www.wccsolar.net/kits-solares/', 'kit');
+    const charge_regulators = await wccScrapper('https://www.wccsolar.net/reguladores-solares/', 'charge_regulator');
+    const structures = await wccScrapper('https://www.wccsolar.net/estructuras-solares/', 'structure');
+    const pumping_systems = await wccScrapper('https://www.wccsolar.net/bombas-solares/', 'pumping_system');
 
     const products = panels.concat(inverters, batteries, kits, charge_regulators, structures, pumping_systems);
     console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'kits:', kits.length , 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
@@ -40,7 +40,6 @@ async function wccScrapper(url, product_type) {
             const productUlPriceXPath2 =`/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/span[1]/ins/span/bdi`;
             const productUrlXPath   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/a`;
             const productUrlXPath2   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/a`;
-
 
             let product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;

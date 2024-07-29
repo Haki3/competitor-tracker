@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer');
 const { sendToDatabase } = require('../../../utils/db');
+const fs = require('fs');
+const sleep = require('sleep-promise');
 
 async function autosolarMain() {
     try {
@@ -46,8 +48,19 @@ async function autosolarScrapper(url, product_type) {
 
     while (!isLastPage) {
         const page = await browser.newPage();
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        // Cargar cookies
+        const cookiesFilePath = 'cookies.json';
+        if (fs.existsSync(cookiesFilePath)) {
+            const cookies = JSON.parse(fs.readFileSync(cookiesFilePath, 'utf-8'));
+            await page.setCookie(...cookies);
+        }
         try {
             await page.goto(`${url}?page=${pageNum}`);
+            await sleep(5000); // Esperar a que cargue la página
+            // Guardar cookies
+            const cookies = await page.cookies();
+            fs.writeFileSync(cookiesFilePath, JSON.stringify(cookies, null, 2));
         } catch (error) {
             console.error('Error in autosolarScrapper', error);
             await page.close();
