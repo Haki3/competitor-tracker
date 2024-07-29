@@ -46,7 +46,13 @@ async function autosolarScrapper(url, product_type) {
 
     while (!isLastPage) {
         const page = await browser.newPage();
-        await page.goto(`${url}?page=${pageNum}`);
+        try {
+            await page.goto(`${url}?page=${pageNum}`);
+        } catch (error) {
+            console.error('Error in autosolarScrapper', error);
+            await page.close();
+            break;
+        }
 
         for (let i = 1; ; i++) {
             // If product_type is inverter, the xpath is different
