@@ -19,12 +19,14 @@ async function tiendaSolarMain() {
 }
 
 async function tiendaSolarScrapper(url, product_type) {
+    console.log('Navigating to URL:', url);
+
     const products = [];
 
     let pageNum = 1;
     const browser = await puppeteer.launch({
-        args: ['--no-sandbox'],
-        userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        timeout: 60000,
     });
 
     while (true) {
