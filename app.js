@@ -381,6 +381,55 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
 });
 
+// Lista de URLs para comprobar
+const urlscon = [
+    'https://elalmacenfotovoltaico.com',
+    'https://atersa.shop',
+    'https://autosolar.es',
+    'https://efectosolar.es',
+    'https://www.energylevante.com',
+    'https://www.rebacas.com',
+    'https://solar-facil.es',
+    'https://suministrosdelsol.com',
+    'https://supermercadosolar.es',
+    'https://www.teknosolar.com',
+    'https://tienda-solar.es',
+    'https://www.wccsolar.net'
+];
+
+
+// Ruta para obtener el estado de las conexiones
+app.get('/check-connections', async (req, res) => {
+    const results = [];
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    for (let url of urlscon) {
+        try {
+            await page.goto(url, { waitUntil: 'networkidle2' });
+            const content = await page.content();
+            results.push({
+                url,
+                status: 'Connected',
+                content: content.slice(0, 500) // Mostrar solo los primeros 500 caracteres
+            });
+        } catch (error) {
+            results.push({
+                url,
+                status: 'Error',
+                error: error.message
+            });
+        }
+    }
+
+    await browser.close();
+    res.json(results);
+});
+
+// Servir archivos estáticos (la página HTML)
+app.use(express.static('public'));
+
+
 app.listen(process.env.PORT || 3000, () => {
     console.log('The tienda solar bot is running! 🚀');
 });

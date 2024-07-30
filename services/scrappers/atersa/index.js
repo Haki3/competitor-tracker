@@ -30,8 +30,6 @@ async function atersaScrapper(url, product_type) {
     // no sandbox mode to avoid issues with the browser
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        timeout: 60000,  // Timeout global
-        protocolTimeout: 60000
     });
     const page = await browser.newPage();
     console.log(`Navigating to ${url}`);

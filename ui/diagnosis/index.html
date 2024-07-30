@@ -3,111 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scraping Diagnosis</title>
+    <title>Connection Checker</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        .container {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
+            width: 100%;
+            max-width: 1200px;
         }
-        .site {
+        .grid-item {
             border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .status {
-            font-weight: bold;
-        }
-        .status.green {
-            color: #4caf50;
-        }
-        .status.red {
-            color: #f44336;
-        }
-        img {
-            max-width: 100%;
             border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .hidden {
-            display: none;
+        .grid-item h2 {
+            margin-top: 0;
+        }
+        .grid-item p {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .loading {
+            color: #888;
+        }
+        .response {
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
         }
     </style>
 </head>
 <body>
-    <h1>Scraping Diagnosis</h1>
-    <div class="container" id="results"></div>
+    <h1>Connection Checker</h1>
+    <div class="grid" id="grid">
+        <!-- Grid items will be inserted here by JavaScript -->
+    </div>
+
     <script>
-        async function fetchDiagnosisData() {
+        async function fetchConnections() {
             try {
-                const response = await fetch('/diagnosis-data');
-                
-                // Verifica el tipo de contenido
-                const contentType = response.headers.get('Content-Type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Invalid content type');
-                }
+                const response = await fetch('/check-connections');
+                const results = await response.json();
+                const grid = document.getElementById('grid');
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
-                }
-
-                const data = await response.json();
-                const resultsContainer = document.getElementById('results');
-
-                if (!Array.isArray(data)) {
-                    throw new Error('Invalid JSON format');
-                }
-
-                data.forEach(({ site, status, message, screenshot }) => {
-                    const siteDiv = document.createElement('div');
-                    siteDiv.classList.add('site');
-
-                    const siteTitle = document.createElement('h2');
-                    siteTitle.textContent = site;
-
-                    const toggleButton = document.createElement('button');
-                    toggleButton.textContent = `Show results for ${site}`;
-                    toggleButton.addEventListener('click', () => {
-                        const statusDiv = siteDiv.querySelector('.status-container');
-                        statusDiv.classList.toggle('hidden');
-                        toggleButton.textContent = statusDiv.classList.contains('hidden') ? `Show results for ${site}` : `Hide results for ${site}`;
-                    });
-
-                    const statusDiv = document.createElement('div');
-                    statusDiv.classList.add('status-container', 'hidden');
-
-                    const statusP = document.createElement('p');
-                    statusP.classList.add('status', status);
-                    statusP.textContent = message;
-                    statusDiv.appendChild(statusP);
-
-                    if (screenshot) {
-                        const img = document.createElement('img');
-                        img.src = `data:image/png;base64,${screenshot}`;
-                        statusDiv.appendChild(img);
-                    }
-
-                    siteDiv.appendChild(siteTitle);
-                    siteDiv.appendChild(toggleButton);
-                    siteDiv.appendChild(statusDiv);
-                    resultsContainer.appendChild(siteDiv);
+                results.forEach(({ url, status, content, error }) => {
+                    const item = document.createElement('div');
+                    item.className = 'grid-item';
+                    item.innerHTML = `
+                        <h2>${new URL(url).hostname}</h2>
+                        <p class="loading">${status}</p>
+                        <pre class="response">${status === 'Error' ? 'Error: ' + error : content}</pre>
+                    `;
+                    item.querySelector('.response').style.color = status === 'Error' ? 'red' : 'green';
+                    grid.appendChild(item);
                 });
             } catch (error) {
-                console.error('Error fetching diagnosis data:', error);
-                const resultsContainer = document.getElementById('results');
-                const errorDiv = document.createElement('div');
-                errorDiv.textContent = `Failed to load diagnosis data: ${error.message}`;
-                resultsContainer.appendChild(errorDiv);
+                console.error('Error fetching connections:', error);
             }
         }
 
-        // Llama a la función para cargar los datos al cargar la página
-        fetchDiagnosisData();
+        fetchConnections();
     </script>
 </body>
 </html>
