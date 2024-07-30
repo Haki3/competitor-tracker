@@ -158,6 +158,8 @@ async function atersaScrapper(url, product_type) {
             console.log('Product:', product_name, 'Price:', product_price, 'URL:', product_url);
         }
 
+        console.log('Product:', product_name, 'Price:', product_price, 'URL:', product_url);
+
         if (!product_name) {
             break;
         }
