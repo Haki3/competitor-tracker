@@ -28,9 +28,14 @@ async function atersaMain() {
 
 async function atersaScrapper(url, product_type) {
     // no sandbox mode to avoid issues with the browser
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        timeout: 60000,  // Timeout global
+        protocolTimeout: 60000
+    });
     const page = await browser.newPage();
-    await page.goto(url);
+    console.log(`Navigating to ${url}`);
+    await page.goto(url, { waitUntil: 'networkidle2' });
 
     let i = 1;
     let products = [];

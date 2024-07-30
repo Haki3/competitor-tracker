@@ -40,6 +40,44 @@ const tiendasConfig = {
     SolarFacil: 'solarfacil',
 };
 
+// URLs a verificar
+const urls = {
+    almacenFotovoltaico: 'https://elalmacenfotovoltaico.com',
+    atersa: 'https://atersa.shop',
+    autosolar: 'https://autosolar.es',
+    efectoSolar: 'https://efectosolar.es',
+    energyLevante: 'https://www.energylevante.com',
+    rebacas: 'https://www.rebacas.com',
+    solarFacil: 'https://solar-facil.es',
+    suministroSolar: 'https://suministrosdelsol.com',
+    supermercadoSolar: 'https://supermercadosolar.es',
+    teknosolar: 'https://www.teknosolar.com',
+    tiendaSolar: 'https://tienda-solar.es',
+    wccSolar: 'https://www.wccsolar.net'
+};
+
+// Función para verificar la conexión a las URLs
+const checkUrls = async () => {
+    console.log('Checking URLs...');
+    const results = await Promise.all(
+        Object.entries(urls).map(async ([name, url]) => {
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    return { name, status: 'success' };
+                } else {
+                    console.error(`${name}: Connection failed with status ${response.status}`);
+                    return { name, status: 'failed', error: `Status: ${response.status}` };
+                }
+            } catch (error) {
+                console.error(`${name}: Connection failed with error ${error.message}`);
+                return { name, status: 'failed', error: error.message };
+            }
+        })
+    );
+    console.log('CONNECTION RESULTS ', results);
+};
+
 // Funciones utils
 const palabrasEliminar = ['Panel', 'Alto Voltaje', 'Inversor', 'Híbrido', 'Bateria', 'Batería', 'Solar', 'Fotovoltaico', 'Fotovoltaica', 'Fotovoltaicos', 'Fotovoltaicas', 'Módulo', 'Monocristalino', 'Policristalino', 'Monocristalina', 'Policristalina', 'Monocristalinos', 'Policristalinos', 'Monocristalinas', 'Policristalinas', 'Regulador', 'Reguladores', 'Regulador de carga', 'Reguladores de carga', 'Cargador', 'Cargadores', 'Cargador de batería', 'Cargadores de batería', 'Cargador solar', 'Cargadores solares', 'Cargador de batería solar', 'Cargadores de batería solar', 'Cargador de batería fotovoltaico', 'Cargadores de batería fotovoltaico', 'Cargador fotovoltaico', 'Cargadores fotovoltaico', 'Cargador solar fotovoltaico', 'Cargadores solares fotovoltaico', 'Cargador de batería solar fotovoltaico', 'Cargadores de batería solar fotovoltaico', 'Cargador de batería fotovoltaico solar', 'Cargadores de batería fotovoltaico solar', 'Cargador fotovoltaico solar', 'Cargadores fotovoltaico solar', 'Cargador solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar', 'Cargador de batería solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería solar fotovoltaico solar fotovoltaico solar', 'Cargador de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores de batería fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargador solar fotovoltaico solar fotovoltaico solar fotovoltaico solar', 'Cargadores solares fotovoltaico solar fotovoltaico solar fotovoltaico solar'];
 
@@ -301,9 +339,11 @@ const genReportOnStart = async () => {
     }
 }
 
+
 // Llamar a la función para actualizar competidores cada 6 horas
 const onStart = async () => {
     try {
+        await checkUrls();
         await updateCompetitorPeriodically();
         genReportOnStart();
     } catch (error) {
