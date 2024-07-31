@@ -1,7 +1,5 @@
 const puppeteer = require('puppeteer');
 const { sendToDatabase } = require('../../../utils/db');
-const { URL } = require('url'); // Importa el constructor URL
-
 
 async function autosolarMain() {
     try {
@@ -44,16 +42,17 @@ async function autosolarScrapper(url, product_type) {
 
     let pageNum = 1;
     let isLastPage = false;
-    console.log('Quotaguard URL:', process.env.QUOTAGUARD_URL);
-    const proxy = new URL(process.env.QUOTAGUARD_URL);
-    console.log('Proxy:', JSON.stringify(proxy));
-    const browser = await puppeteer.launch({ headless: true, args: [
-        '--no-sandbox', '--disable-setuid-sandbox','proxy-server=' + proxy.hostname + ':' + proxy.port
-    ] });
+    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
     while (!isLastPage) {
         const page = await browser.newPage();
-        await page.goto(`${url}?page=${pageNum}`);
+        try {
+            await page.goto(`${url}?page=${pageNum}`);
+        } catch (error) {
+            console.error('Error in autosolarScrapper', error);
+            await page.close();
+            break;
+        }
 
         for (let i = 1; ; i++) {
             // If product_type is inverter, the xpath is different

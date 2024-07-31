@@ -66,7 +66,6 @@ const checkUrls = async () => {
                 if (response.ok) {
                     return { name, status: 'success' };
                 } else {
-                    console.error(`${name}: Connection failed with status ${response.status}`);
                     return { name, status: 'failed', error: `Status: ${response.status}` };
                 }
             } catch (error) {
