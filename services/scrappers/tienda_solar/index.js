@@ -26,12 +26,22 @@ async function tiendaSolarScrapper(url, product_type) {
     let pageNum = 1;
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        timeout: 60000,
+        protocolTimeout: 30000 // 30 segundos
     });
 
     while (true) {
         const page = await browser.newPage();
-        await page.goto(`${url}?page=${pageNum}`);
+
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
+        await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
 
         let hasProducts = false;  // Variable para verificar si hay productos en la página actual
 
@@ -99,12 +109,11 @@ async function tiendaSolarScrapper(url, product_type) {
         product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica|eléctrico|ye|Alto Voltaje)/gi, '').trim();
 
         // Eliminar espacios al principio y al final
-        product.product_name = product.product_name.trim();  
+        product.product_name = product.product_name.trim();
     }
 
     await browser.close();
     return uniqueProducts;
 }
-
 
 module.exports = tiendaSolarMain;

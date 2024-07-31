@@ -30,7 +30,7 @@ async function atersaMain() {
 async function atersaScrapper(url, product_type) {
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        protocolTimeout: 30000 // 30 segundos
+        protocolTimeout: 450000 // 45 segundos
     });
 
     try {
