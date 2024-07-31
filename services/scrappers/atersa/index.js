@@ -163,4 +163,4 @@ async function atersaScrapper(url, product_type) {
     }
 }
 
-atersaMain();
+module.exports = atersaMain;
