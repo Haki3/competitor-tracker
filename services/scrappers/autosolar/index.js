@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const { sendToDatabase } = require('../../../utils/db');
-const fs = require('fs');
-const sleep = require('sleep-promise');
+const { URL } = require('url'); // Importa el constructor URL
+
 
 async function autosolarMain() {
     try {
@@ -37,60 +37,23 @@ async function autosolarMain() {
         console.error('Error in autosolarMain', error);
     }
 }
-const userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1'
-];
 
 async function autosolarScrapper(url, product_type) {
 
     const products = [];
-    // Get proxies from a file proxy.txt
-    const proxies = fs.readFileSync('proxy.txt', 'utf-8').split('\n');
 
     let pageNum = 1;
     let isLastPage = false;
+    console.log('Quotaguard URL:', process.env.QUOTAGUARD_URL);
+    const proxy = new URL(process.env.QUOTAGUARD_URL);
+    console.log('Proxy:', JSON.stringify(proxy));
+    const browser = await puppeteer.launch({ headless: true, args: [
+        '--no-sandbox', '--disable-setuid-sandbox','proxy-server=' + proxy.hostname + ':' + proxy.port
+    ] });
 
     while (!isLastPage) {
-        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
-
-        let browser;
-        try {
-            browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxy}`]
-            });
-            console.log('Using IP:', proxy);
-        } catch (error) {
-            console.error('Error launching puppeteer', error);
-            break;
-        }
         const page = await browser.newPage();
-        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-        await page.setUserAgent(randomUserAgent);
-        await page.setExtraHTTPHeaders({
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br'
-        });
-
-        // Cargar cookies
-        const cookiesFilePath = 'cookies.json';
-        if (fs.existsSync(cookiesFilePath)) {
-            const cookies = JSON.parse(fs.readFileSync(cookiesFilePath, 'utf-8'));
-            await page.setCookie(...cookies);
-        }
-        try {
-            await page.goto(`${url}?page=${pageNum}`);
-            await sleep(5000); // Esperar a que cargue la página
-            // Guardar cookies
-            const cookies = await page.cookies();
-            fs.writeFileSync(cookiesFilePath, JSON.stringify(cookies, null, 2));
-        } catch (error) {
-            console.error('Error in autosolarScrapper', error);
-            await page.close();
-            break;
-        }
+        await page.goto(`${url}?page=${pageNum}`);
 
         for (let i = 1; ; i++) {
             // If product_type is inverter, the xpath is different
