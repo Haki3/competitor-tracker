@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = import('node-fetch');
 const path = require('path');
 const puppeteer = require('puppeteer');
 const app = express();
@@ -58,6 +58,7 @@ const urls = {
 
 // Función para verificar la conexión a las URLs
 const checkUrls = async () => {
+    const fetch = (await import('node-fetch')).default;
     console.log('Checking URLs...');
     const results = await Promise.all(
         Object.entries(urls).map(async ([name, url]) => {
