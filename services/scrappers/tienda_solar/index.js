@@ -41,7 +41,23 @@ async function tiendaSolarScrapper(url, product_type) {
             }
         });
 
-        await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
+        let success = false;
+        for (let attempt = 1; attempt <= 5; attempt++) {
+            try {
+                await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
+                success = true;
+                break;
+            } catch (error) {
+                console.error(`Error navigating to ${url}?page=${pageNum}, attempt ${attempt}: ${error.message}`);
+                if (attempt === 5) {
+                    console.error(`Failed to load ${url}?page=${pageNum} after 5 attempts. Skipping...`);
+                }
+            }
+        }
+
+        if (!success) {
+            break;
+        }
 
         let hasProducts = false;  // Variable para verificar si hay productos en la página actual
 
