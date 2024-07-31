@@ -70,7 +70,6 @@ const checkUrls = async () => {
                     return { name, status: 'failed', error: `Status: ${response.status}` };
                 }
             } catch (error) {
-                console.error(`${name}: Connection failed with error ${error.message}`);
                 return { name, status: 'failed', error: error.message };
             }
         })
