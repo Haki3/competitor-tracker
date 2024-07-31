@@ -1,7 +1,12 @@
 const puppeteer = require('puppeteer');
 const { sendToDatabase } = require('../../../utils/db');
+const axios = require('axios');
 
 async function autosolarMain() {
+    // Check the IP address
+    ipcheckercall();
+
+
     try {
         const panels = await autosolarScrapper('https://autosolar.es/paneles-solares', 'panel');
         const inverters = await autosolarScrapper('https://autosolar.es/inversores', 'inverter');
@@ -271,5 +276,18 @@ async function autosolarScrapper(url, product_type) {
     await browser.close();
     return products;
 }
+
+async function ipcheckercall() {
+
+    try {
+        const response = await axios.get('https://api.bigdatacloud.net/data/client-ip');
+        console.log(response.data);
+    }
+
+    catch (error) {
+        console.error('Error in ipcheckercall', error);
+    }
+}
+
 
 module.exports = autosolarMain;
