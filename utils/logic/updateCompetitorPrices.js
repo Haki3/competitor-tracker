@@ -13,8 +13,8 @@ const solarFacilMain = require('../../services/scrappers/solarfacil');
 
 async function updateCompetitor(parametro) {
     const scrappers = {
-        'tienda_solar': tiendaSolarMain,
-        'atersa': atersaMain,
+        // 'tienda_solar': tiendaSolarMain,
+        // 'atersa': atersaMain,
         'autosolar': autosolarMain,
         'supermercadosolar': supermercadosolarMain,
         'wcc': wccSolarMain,

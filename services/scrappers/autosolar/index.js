@@ -37,18 +37,43 @@ async function autosolarMain() {
         console.error('Error in autosolarMain', error);
     }
 }
+const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1'
+];
 
 async function autosolarScrapper(url, product_type) {
 
     const products = [];
+    // Get proxies from a file proxy.txt
+    const proxies = fs.readFileSync('proxy.txt', 'utf-8').split('\n');
 
     let pageNum = 1;
     let isLastPage = false;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
     while (!isLastPage) {
+        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
+
+        let browser;
+        try {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${proxy}`]
+            });
+            console.log('Using IP:', proxy);
+        } catch (error) {
+            console.error('Error launching puppeteer', error);
+            break;
+        }
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+        const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+        await page.setUserAgent(randomUserAgent);
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br'
+        });
+
         // Cargar cookies
         const cookiesFilePath = 'cookies.json';
         if (fs.existsSync(cookiesFilePath)) {
