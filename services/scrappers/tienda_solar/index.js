@@ -34,19 +34,18 @@ async function tiendaSolarScrapper(url, product_type) {
     });
 
     while (true) {
-        const page = await browser.newPage();
-
-        await page.setRequestInterception(true);
-        page.on('request', (req) => {
-            if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
-                req.abort();
-            } else {
-                req.continue();
-            }
-        });
-
         let success = false;
         for (let attempt = 1; attempt <= 5; attempt++) {
+            const page = await browser.newPage();
+
+            await page.setRequestInterception(true);
+            page.on('request', (req) => {
+                if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
+                    req.abort();
+                } else {
+                    req.continue();
+                }
+            });
             console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
             try {
                 await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
@@ -64,7 +63,7 @@ async function tiendaSolarScrapper(url, product_type) {
             break;
         }
 
-        let hasProducts = false;  // Variable to check if there are products on the current page
+        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
 
         for (let i = 1; ; i++) {
             const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
@@ -75,7 +74,7 @@ async function tiendaSolarScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }, productNameXPath);
 
-            // If there is no product, exit the loop and move to the next page
+            // Si no hay producto, salir del bucle y saltar a la siguiente página
             if (!product_name) {
                 break;
             }
@@ -98,7 +97,7 @@ async function tiendaSolarScrapper(url, product_type) {
 
         await page.close();
 
-        // If there are no products on the page, exit the main loop
+        // Si no hay productos en la página, salir del bucle principal
         if (!hasProducts) {
             break;
         }
@@ -106,14 +105,14 @@ async function tiendaSolarScrapper(url, product_type) {
         pageNum++;
     }
 
-    // Remove duplicates
+    // Eliminar duplicados
     const uniqueProducts = products.filter(
         (product, index, self) =>
             index ===
             self.findIndex((p) => p.product_name === product.product_name && p.product_price === product.product_price)
     );
 
-    // Process product data
+    // Añadir a cada elemento de uniqueProducts el campo "product_store" con el valor "Tienda Solar" y eliminar el signo de euro del precio y sea un integer pero manteniendo los decimales
     for (const product of uniqueProducts) {
         product.product_store = 'tienda_solar';
         product.product_type = product_type;
@@ -121,7 +120,15 @@ async function tiendaSolarScrapper(url, product_type) {
             product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
         }
 
+        // Si queda cualquier producto sin product_type, asignarle el valor correspondiente
+        if (!product.product_type) {
+            product.product_type = product_type;
+        }
+
+        // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
         product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica|eléctrico|ye|Alto Voltaje)/gi, '').trim();
+
+        // Eliminar espacios al principio y al final
         product.product_name = product.product_name.trim();
     }
 
