@@ -14,9 +14,9 @@ async function tiendaSolarMain() {
     const products = panels.concat(inverters, batteries, car_chargers, kits, charge_regulators, structures, pumping_systems);
     console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'car_chargers:', car_chargers.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length, 'pumping_systems:', pumping_systems.length);
 
-    if  (products && products.length > 0) {
+    if (products && products.length > 0) {
         await sendToDatabase(products);
-        console.log('TiendaSolar prices updated. Sending to database...')
+        console.log('TiendaSolar prices updated. Sending to database...');
     } else {
         console.log('No products found');
     }
@@ -26,11 +26,12 @@ async function tiendaSolarScrapper(url, product_type) {
     console.log('Navigating to URL:', url);
 
     const products = [];
-
     let pageNum = 1;
+
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        protocolTimeout: 30000 // 30 segundos
+        headless: true,
+        protocolTimeout: 60000 // 60 segundos
     });
 
     while (true) {
@@ -40,15 +41,19 @@ async function tiendaSolarScrapper(url, product_type) {
 
             await page.setRequestInterception(true);
             page.on('request', (req) => {
-                if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
+                if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
                     req.abort();
                 } else {
                     req.continue();
                 }
             });
+
             console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
             try {
-                await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
+                await page.goto(`${url}?page=${pageNum}`, {
+                    waitUntil: 'networkidle2',
+                    timeout: 90000 // 90 segundos
+                });
                 success = true;
                 break;
             } catch (error) {
@@ -56,6 +61,8 @@ async function tiendaSolarScrapper(url, product_type) {
                 if (attempt === 5) {
                     console.error(`Failed to load ${url}?page=${pageNum} after 5 attempts. Skipping...`);
                 }
+            } finally {
+                await page.close();
             }
         }
 
@@ -63,28 +70,28 @@ async function tiendaSolarScrapper(url, product_type) {
             break;
         }
 
-        let hasProducts = false;  // Variable para verificar si hay productos en la página actual
+        let hasProducts = false;
 
+        const page = await browser.newPage();
         for (let i = 1; ; i++) {
             const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
             const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/div[3]/a/span`;
 
-            let product_name = await page.evaluate((xpath) => {
+            const product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productNameXPath);
 
-            // Si no hay producto, salir del bucle y saltar a la siguiente página
             if (!product_name) {
                 break;
             }
 
-            let product_price = await page.evaluate((xpath) => {
+            const product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productPriceXPath);
 
-            let product_url = await page.evaluate((xpath) => {
+            const product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.href : null;
             }, productNameXPath);
@@ -97,7 +104,6 @@ async function tiendaSolarScrapper(url, product_type) {
 
         await page.close();
 
-        // Si no hay productos en la página, salir del bucle principal
         if (!hasProducts) {
             break;
         }
@@ -105,14 +111,11 @@ async function tiendaSolarScrapper(url, product_type) {
         pageNum++;
     }
 
-    // Eliminar duplicados
     const uniqueProducts = products.filter(
         (product, index, self) =>
-            index ===
-            self.findIndex((p) => p.product_name === product.product_name && p.product_price === product.product_price)
+            index === self.findIndex((p) => p.product_name === product.product_name && p.product_price === product.product_price)
     );
 
-    // Añadir a cada elemento de uniqueProducts el campo "product_store" con el valor "Tienda Solar" y eliminar el signo de euro del precio y sea un integer pero manteniendo los decimales
     for (const product of uniqueProducts) {
         product.product_store = 'tienda_solar';
         product.product_type = product_type;
@@ -120,15 +123,11 @@ async function tiendaSolarScrapper(url, product_type) {
             product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
         }
 
-        // Si queda cualquier producto sin product_type, asignarle el valor correspondiente
         if (!product.product_type) {
             product.product_type = product_type;
         }
 
-        // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
         product.product_name = product.product_name.replace(/(Inversor|Panel|Bateria|Batería|Litio|Regulador|Módulo|híbrido|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica|eléctrico|ye|Alto Voltaje)/gi, '').trim();
-
-        // Eliminar espacios al principio y al final
         product.product_name = product.product_name.trim();
     }
 
