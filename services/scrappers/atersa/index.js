@@ -32,130 +32,142 @@ async function atersaScrapper(url, product_type) {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
         protocolTimeout: 450000 // 45 segundos
     });
-
     try {
-        const page = await browser.newPage();
-        console.log(`Navigating to ${url}`);
-        
-        await page.setRequestInterception(true);
-        page.on('request', (req) => {
-            if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
-                req.abort();
-            } else {
-                req.continue();
-            }
-        });
+        for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                    const page = await browser.newPage();
+                    console.log(`Navigating to ${url}`);
+                    
+                    await page.setRequestInterception(true);
+                    page.on('request', (req) => {
+                        if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
+                            req.abort();
+                        } else {
+                            req.continue();
+                        }
+                    });
 
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
+                    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
 
-        let i = 1;
-        let products = [];
-        while (true) {
-            const product_name_xpath =              `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
-            const product_name_xpath_fallback =     `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
-            const product_name_xpath_fallback_2 =   `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
-            const product_name_xpath_fallback_3 =   `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
-            const product_price_xpath =             `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
-            const product_price_xpath_fallback =    `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
-            const product_price_xpath_fallback_2 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
-            const product_price_xpath_fallback_3 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
-            const product_price_xpath_fallback_4 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
-            const product_price_xpath_fallback_5 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
-            const product_price_xpath_fallback_6 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
-            const product_price_xpath_fallback_7 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
+                    let i = 1;
+                let products = [];
+                while (true) {
+                    const product_name_xpath =              `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
+                    const product_name_xpath_fallback =     `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
+                    const product_name_xpath_fallback_2 =   `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/a[2]/h3`;
+                    const product_name_xpath_fallback_3 =   `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/a[2]/h3`;
+                    const product_price_xpath =             `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
+                    const product_price_xpath_fallback =    `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
+                    const product_price_xpath_fallback_2 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
+                    const product_price_xpath_fallback_3 =  `/html/body/div[3]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
+                    const product_price_xpath_fallback_4 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/ins/span/bdi`;
+                    const product_price_xpath_fallback_5 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul[2]/div/div[${i}]/div/div[1]/span/bdi`;
+                    const product_price_xpath_fallback_6 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/span/bdi`;
+                    const product_price_xpath_fallback_7 =  `/html/body/div[2]/div[2]/div[3]/main/div[2]/div/div[2]/ul/div/div[${i}]/div/div[1]/ins/span/bdi`;
+                    
+                    let product_name = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent : null;
+                    }, product_name_xpath);
+
+                    if (!product_name) {
+                        product_name = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_name_xpath_fallback);
+                    }
+
+                    if (!product_name) {
+                        product_name = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_name_xpath_fallback_2);
+                    }
+
+                    if (!product_name) {
+                        product_name = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_name_xpath_fallback_3);
+                    }
+
+                    let product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent : null;
+                    }, product_price_xpath);
+
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback);
+                    }
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_2);
+                    }
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_3);
+                    }
+
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_4);
+                    }
+
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_5);
+                    }
+
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_6);
+                    }
+
+                    if (!product_price) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent : null;
+                        }, product_price_xpath_fallback_7);
+                    }
+
+                    if (product_name && product_price) {
+                        let product = {
+                            product_type,
+                            product_name,
+                            product_price,
+                        };
+                        console.log(product);
+                        products.push(product);
+                        i++;
+                    } else {
+                        break;
+                    }    
+                }
+                
+                return products;
             
-            let product_name = await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.textContent : null;
-            }, product_name_xpath);
-
-            if (!product_name) {
-                product_name = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_name_xpath_fallback);
-            }
-
-            if (!product_name) {
-                product_name = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_name_xpath_fallback_2);
-            }
-
-            if (!product_name) {
-                product_name = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_name_xpath_fallback_3);
-            }
-
-            let product_price = await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.textContent : null;
-            }, product_price_xpath);
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback);
-            }
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_2);
-            }
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_3);
-            }
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_4);
-            }
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_5);
-            }
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_6);
-            }
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }, product_price_xpath_fallback_7);
-            }
-
-            if (product_name && product_price) {
-                let product = {
-                    product_type,
-                    product_name,
-                    product_price
-                };
-                console.log(product);
-                products.push(product);
-                i++;
-            } else {
-                break;
+            } catch (error) {
+                console.error(`Error navigating to ${url}, attempt ${attempt}: ${error.message}`);
+                if (attempt === 5) {
+                    console.error(`Failed to load ${url} after 5 attempts. Skipping...`);
+                    await browser.close();
+                    return [];
+                }
             }
         }
-        return products;
     } catch (error) {
         console.error(`Error scraping ${url}:`, error);
     } finally {
