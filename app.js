@@ -314,7 +314,7 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/ui/dashboard/index.html');
 });
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 3000,'0.0.0.0', () => {
     console.log('The tienda solar bot is running! 🚀');
 });
 
