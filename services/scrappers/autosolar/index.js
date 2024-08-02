@@ -2,10 +2,31 @@ const puppeteer = require('puppeteer');
 const { sendToDatabase } = require('../../../utils/db');
 const axios = require('axios');
 
+// Lista de User-Agents para rotar
+const userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    // Agrega más User-Agents aquí
+];
+
+// Lista de proxies
+const proxies = [
+    '45.77.147.46:3128',
+    '144.217.61.69:33073',
+    '162.223.90.130:80',
+    '23.19.244.109:1080',
+    '93.127.215.97:80',
+    '35.185.196.38:3128',
+    '51.89.255.67:80',
+    '217.112.80.252:80',
+    '51.38.191.151:80',
+    '165.232.129.150:80'
+];
+
 async function autosolarMain() {
     // Check the IP address
-    ipcheckercall();
-
+    await ipcheckercall();
 
     try {
         const panels = await autosolarScrapper('https://autosolar.es/paneles-solares', 'panel');
@@ -16,7 +37,7 @@ async function autosolarMain() {
         const structures = await autosolarScrapper('https://autosolar.es/estructura-paneles-solares', 'structure');
         const kits = await autosolarScrapper('https://autosolar.es/kits-solares', 'kit');
 
-        // Si hay algun panel inverter o batería sin type aplicarlo a todos los productos con su product_type correspondiente
+        // Si hay algún producto sin type, aplicarlo
         if (panels.some(panel => !panel.product_type) || inverters.some(inverter => !inverter.product_type) || batteries.some(battery => !battery.product_type) || car_chargers.some(car_charger => !car_charger.product_type) || charge_regulators.some(charge_regulator => !charge_regulator.product_type) || structures.some(structure => !structure.product_type) || kits.some(kit => !kit.product_type)) {
             panels.forEach(panel => panel.product_type = 'panel');
             inverters.forEach(inverter => inverter.product_type = 'inverter');
@@ -27,13 +48,11 @@ async function autosolarMain() {
             kits.forEach(kit => kit.product_type = 'kit');
         }
 
-
-
-        const products = panels.concat(inverters, batteries, car_chargers, charge_regulators,structures, kits);
+        const products = panels.concat(inverters, batteries, car_chargers, charge_regulators, structures, kits);
 
         console.log('TOTAL PRODUCTS RETRIEVED BY TYPE:', 'panels:', panels.length, 'inverters:', inverters.length, 'batteries:', batteries.length, 'car_chargers:', car_chargers.length, 'kits:', kits.length, 'charge_regulators:', charge_regulators.length, 'structures:', structures.length);
 
-        console.log('Autosolar prices updated. Sending to database...')
+        console.log('Autosolar prices updated. Sending to database...');
 
         await sendToDatabase(products);
     } catch (error) {
@@ -42,45 +61,56 @@ async function autosolarMain() {
 }
 
 async function autosolarScrapper(url, product_type) {
-
     const products = [];
-
     let pageNum = 1;
     let isLastPage = false;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const browser = await puppeteer.launch({ 
+        headless: true, 
+        args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+    });
 
     while (!isLastPage) {
         const page = await browser.newPage();
+        const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
+        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
+
+        await page.setUserAgent(userAgent);
+        await page.authenticate({username: 'user', password: 'pass'}); // Si el proxy requiere autenticación
+
         try {
-            await page.goto(`${url}?page=${pageNum}`);
+            await page.goto(`${url}?page=${pageNum}`, { 
+                waitUntil: 'networkidle2',
+                timeout: 30000 // 30 segundos de timeout para la carga de la página
+            });
         } catch (error) {
-            console.error('Error in autosolarScrapper', error);
+            console.error('Error loading page with proxy:', proxy, error);
             await page.close();
-            break;
+            // Retry with otro proxy
+            continue;
         }
 
         for (let i = 1; ; i++) {
-            // If product_type is inverter, the xpath is different
+            // Si product_type es inverter, la xpath es diferente
             let productNameXPath;
             let productPriceXPath;
             if (product_type === 'inverter') {
-                productNameXPath =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
-                productNameXPath2 =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
-                productUrlXpath =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
-                productUrlXpath2 =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
-                productPriceXPath =         `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
+                productNameXPath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productNameXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productUrlXpath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
+                productUrlXpath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
+                productPriceXPath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[1]`;
                 productPriceFallbackXPath3 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
                 productPriceFallbackXPath4 = `/html/body/main/div/div[2]/div[1]/div[${i+1}]/a/div[1]/div[1]`;
                 productPriceFallbackXPath5 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
             } else {
-                productNameXPath =          `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
-                productNameXPath2 =          `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
-                productUrlXpath =           `/html/body/main/div/div[3]/div[1]/div[${i}]/a`;
-                productUrlXpath2 =           `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
-                productPriceXPath =         `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
-                productPriceXPath2 =         `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
+                productNameXPath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
+                productNameXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[2]`;
+                productUrlXpath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a`;
+                productUrlXpath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a`;
+                productPriceXPath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[2]`;
+                productPriceXPath2 = `/html/body/main/div/div[2]/div[1]/div[${i}]/a/div[1]/div[2]`;
                 productPriceFallbackXPath = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div`;
                 productPriceFallbackXPath2 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[1]/div[1]`;
                 productPriceFallbackXPath3 = `/html/body/main/div/div[3]/div[1]/div[${i}]/a/div[2]`;
@@ -105,131 +135,114 @@ async function autosolarScrapper(url, product_type) {
             }
 
             if (product_name === null && i === 1) {
-                isLastPage = true; // Si el nombre del producto es null y estamos en el primer producto de la página, marcamos que estamos en la última página
+                isLastPage = true;
                 break;
             } else if (product_name === null) {
-                break; // Si el nombre del producto es null pero no estamos en el primer producto, simplemente hemos llegado al final de la página actual
+                break;
             }
-            
 
             let product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
-            }
-            , productPriceXPath);
-
+            }, productPriceXPath);
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath);
-            }
-
-            if (!product_price) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath2);
+                }, productPriceFallbackXPath);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath3);
+                }, productPriceFallbackXPath2);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath4);
+                }, productPriceFallbackXPath3);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath5);
+                }, productPriceFallbackXPath4);
             }
 
-            // Si hay un precio que no tiene un signo de euro se redefinira usando productPriceFallbackXPath2
+            if (!product_price) {
+                product_price = await page.evaluate((xpath) => {
+                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                return element ? element.textContent : null;
+                }, productPriceFallbackXPath5);
+            }
+
+            // Si no hay símbolo de Euro en el precio, redefinir usando XPaths de fallback
             if (product_price && !product_price.includes('€')) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPath2);
+                }, productPriceFallbackXPath2);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceXPath2);
+                }, productPriceXPath2);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPathExtra2);
+                }, productPriceFallbackXPathExtra2);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPathExtra3);
+                }, productPriceFallbackXPathExtra3);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPathExtra4);
+                }, productPriceFallbackXPathExtra4);
             }
 
             if (!product_price) {
                 product_price = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.textContent : null;
-                }
-                , productPriceFallbackXPathExtra5);
+                }, productPriceFallbackXPathExtra5);
             }
 
             let product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.href : null;
-            }
-            , productUrlXpath);  
+            }, productUrlXpath);  
 
             if (!product_url) {
                 product_url = await page.evaluate((xpath) => {
                     const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     return element ? element.href : null;
-                }
-                , productUrlXpath2);
+                }, productUrlXpath2);
             }
             
             console.log('Product:', product_name, 'Price:', product_price, 'URL:', product_url);
 
             if (product_name === null) {
-                isLastPage = true; // Si el nombre del producto es null, marcamos que estamos en la última página
+                isLastPage = true;
                 break;
             } else {
-
-                // Limpiar el nombre del producto de las palabras a eliminar
+                // Limpiar nombre del producto
                 const listaPalabrasEliminar = [
                     'Inversor',
                     'Hibrido',
@@ -243,25 +256,17 @@ async function autosolarScrapper(url, product_type) {
                 for (const palabra of listaPalabrasEliminar) {
                     product_name = product_name.replace(palabra, '');
                 }
-                // Eliminar palabras que no sean el modelo y codigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que este en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
                 product_name = product_name.replace(/(Inversor|Panel|Bateria|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa|Fotovoltaica)/gi, '').trim();
-
-                // Limpiar el nombre del producto de los espacios al principio y al final
                 product_name = product_name.trim();
 
                 products.push({ product_name, product_price, product_url });
 
-                // Añadir a cada elemento de products el campo "product_store" con el valor "autosolar" y eliminar el signo de euro del precio y sea un integer pero manteniendo los decimales
+                // Añadir detalles adicionales al producto
                 for (const product of products) {
                     product.product_store = 'autosolar';
                     product.product_type = product_type;
                     if (typeof product.product_price === 'string') {
                         product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
-                    }
-
-                    // Si queda cualquier producto sin product_type, asignarle el valor correspondiente
-                    if (!product.product_type) {
-                        product.product_type = product_type;
                     }
                 }
             }
@@ -272,22 +277,49 @@ async function autosolarScrapper(url, product_type) {
         }
 
         await page.close();
+        // Esperar un tiempo aleatorio entre solicitudes para evitar detección de scraping
+        await new Promise(resolve => setTimeout(resolve, Math.random() * (60000 - 30000) + 30000));
     }
     await browser.close();
     return products;
 }
 
-async function ipcheckercall() {
+// Tiempo máximo para intentar el proxy antes de pasar al siguiente (en milisegundos)
+const maxRetryTime = 30000;
 
-    try {
-        const response = await axios.get('https://api.bigdatacloud.net/data/client-ip');
-        console.log(response.data);
+async function ipcheckercall() {
+    let attempts = 0;
+    const maxAttempts = proxies.length; // Intentar con todos los proxies disponibles
+    let success = false;
+
+    while (attempts < maxAttempts && !success) {
+        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
+        const [host, port] = proxy.split(':');
+
+        attempts++;
+
+        try {
+            const response = await axios.get('https://api.bigdatacloud.net/data/client-ip', {
+                proxy: {
+                    host,
+                    port: parseInt(port, 10)
+                },
+                timeout: maxRetryTime // Tiempo máximo de espera para una respuesta
+            });
+
+            console.log('IP Check response:', response.data);
+            success = true;
+        } catch (error) {
+            console.error(`Error in ipcheckercall with proxy ${proxy}: ${error.message}`);
+
+            // Esperar antes de intentar con otro proxy
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5 segundos
+        }
     }
 
-    catch (error) {
-        console.error('Error in ipcheckercall', error);
+    if (!success) {
+        console.error('Failed to get a valid response from all proxies');
     }
 }
-
 
 module.exports = autosolarMain;
