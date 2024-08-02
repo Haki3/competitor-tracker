@@ -33,60 +33,49 @@ async function supermercadosolarScrapper(url, product_type) {
     console.log('Navigating to URL:', url);
 
     const products = [];
-    let pageNum = 1;
-
     const browser = await puppeteer.launch({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
         headless: true,
         protocolTimeout: 60000 // 60 segundos
     });
 
-    while (true) {
+    let page;
+    try {
+        page = await browser.newPage();
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
+        // Reintentos para la navegación
         let success = false;
         for (let attempt = 1; attempt <= 5; attempt++) {
-            let page;
             try {
-                page = await browser.newPage();
-
-                await page.setRequestInterception(true);
-                page.on('request', (req) => {
-                    if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
-                        req.abort();
-                    } else {
-                        req.continue();
-                    }
-                });
-
-                console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
-                await page.goto(`${url}?page=${pageNum}`, {
-                    timeout: 50000 // 50 segundos
-                });
+                console.log(`Navigating to ${url}, attempt ${attempt}`);
+                await page.goto(url, { timeout: 50000 }); // 50 segundos
                 success = true;
                 break;
             } catch (error) {
-                console.error(`Error navigating to ${url}?page=${pageNum}, attempt ${attempt}: ${error.message}`);
+                console.error(`Error navigating to ${url}, attempt ${attempt}: ${error.message}`);
                 if (attempt < 5) {
                     console.log(`Waiting 10 seconds before retrying...`);
-                    await new Promise(resolve => setTimeout(resolve, 10000));
+                    await new Promise(resolve => setTimeout(resolve, 10000)); // Espera 10 segundos
                 } else {
-                    console.error(`Failed to load ${url}?page=${pageNum} after 5 attempts. Skipping...`);
+                    console.error(`Failed to load ${url} after 5 attempts. Skipping...`);
                 }
-            } finally {
-                if (page) await page.close();
             }
         }
 
         if (!success) {
-            break;
+            return products; // Regresar vacío si fallan todos los intentos
         }
 
-        let hasProducts = false;
-        console.log('Connection successful. Scraping page', pageNum);
-
-        const page = await browser.newPage();
-        await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'domcontentloaded' });
-
-        for (let i = 1; ; i++) {
+        let i = 1;
+        while (true) {
             const product_name_xpath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[4]/div[2]/div[1]/div[${i}]/article/div[2]/h2/a`;
             const product_price_xpath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[4]/div[2]/div[1]/div[${i}]/article/div[2]/div[3]/a/span`;
 
@@ -95,12 +84,12 @@ async function supermercadosolarScrapper(url, product_type) {
                 return element ? element.textContent : null;
             }, product_name_xpath);
 
-            let product_price = await page.evaluate((xpath) => {
+            const product_price = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, product_price_xpath);
 
-            let product_url = await page.evaluate((xpath) => {
+            const product_url = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.href : null;
             }, product_name_xpath);
@@ -109,39 +98,30 @@ async function supermercadosolarScrapper(url, product_type) {
                 break;
             }
 
-            // Eliminar palabras que no sean el modelo y códigos de producto en el nombre del producto y eliminar espacios al principio y al final , cualquier palabra que esté en el diccionario español : Inversor, Panel, Bateria, Regulador, Cargador, Kit, Estructura, Bomba, Solar, Fotovoltaico, Placa
-            product_name.replace(/Inversor|Panel|Bateria|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa/g, '');
+            // Clean product name
+            let cleanedProductName = product_name.replace(/Inversor|Panel|Bateria|Regulador|Cargador|Kit|Estructura|Bomba|Solar|Fotovoltaico|Placa/g, '').trim();
 
-            // Eliminar espacios al principio y al final
-            product_name.trim();
+            // Clean and convert product price
+            let cleanedProductPrice = parseFloat(product_price.replace('€', '').replace('.', '').replace(',', '.'));
 
-            products.push({ product_name, product_price, product_url });
+            products.push({ 
+                product_name: cleanedProductName, 
+                product_price: cleanedProductPrice, 
+                product_url,
+                product_store: 'supermercadosolar',
+                product_type 
+            });
 
-            hasProducts = true;
+            i++;
         }
-
-        await page.close();
-
-        if (!hasProducts) {
-            break;
-        }
-
-        pageNum++;
+    } catch (error) {
+        console.error(`Error scraping ${url}: ${error.message}`);
+    } finally {
+        if (page) await page.close();
+        await browser.close();
     }
 
-    // Añadir a cada elemento de products el campo "product_store" con el valor "supermercadosolar" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
-    const uniqueProducts = products.map(product => {
-        product.product_store = 'supermercadosolar';
-        product.product_type = product_type;
-        if (typeof product.product_price === 'string') {
-            product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
-        }
-
-        return product;
-    });
-
-    await browser.close();
-    return uniqueProducts;
+    return products;
 }
 
 module.exports = supermercadosolarMain;
