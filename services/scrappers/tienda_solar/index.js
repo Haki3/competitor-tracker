@@ -37,19 +37,20 @@ async function tiendaSolarScrapper(url, product_type) {
     while (true) {
         let success = false;
         for (let attempt = 1; attempt <= 5; attempt++) {
-            const page = await browser.newPage();
-
-            await page.setRequestInterception(true);
-            page.on('request', (req) => {
-                if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
-                    req.abort();
-                } else {
-                    req.continue();
-                }
-            });
-
-            console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
+            let page;
             try {
+                page = await browser.newPage();
+
+                await page.setRequestInterception(true);
+                page.on('request', (req) => {
+                    if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+                        req.abort();
+                    } else {
+                        req.continue();
+                    }
+                });
+
+                console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
                 await page.goto(`${url}?page=${pageNum}`, {
                     timeout: 50000 // 50 segundos
                 });
@@ -64,7 +65,7 @@ async function tiendaSolarScrapper(url, product_type) {
                     console.error(`Failed to load ${url}?page=${pageNum} after 5 attempts. Skipping...`);
                 }
             } finally {
-                await page.close();
+                if (page) await page.close();
             }
         }
 
