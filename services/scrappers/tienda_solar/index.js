@@ -51,13 +51,16 @@ async function tiendaSolarScrapper(url, product_type) {
             console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
             try {
                 await page.goto(`${url}?page=${pageNum}`, {
-                    timeout: 50000 // 90 segundos
+                    timeout: 50000 // 50 segundos
                 });
                 success = true;
                 break;
             } catch (error) {
                 console.error(`Error navigating to ${url}?page=${pageNum}, attempt ${attempt}: ${error.message}`);
-                if (attempt === 5) {
+                if (attempt < 5) {
+                    console.log(`Waiting 10 seconds before retrying...`);
+                    await new Promise(resolve => setTimeout(resolve, 10000));
+                } else {
                     console.error(`Failed to load ${url}?page=${pageNum} after 5 attempts. Skipping...`);
                 }
             } finally {
@@ -73,10 +76,9 @@ async function tiendaSolarScrapper(url, product_type) {
         console.log('Connection successful. Scraping page', pageNum);
 
         const page = await browser.newPage();
-        // Wait for the page to load completely
         await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'domcontentloaded' });
         for (let i = 1; ; i++) {
-            const productNameXPath = `  /html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
+            const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
             const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/div[3]/a/span`;
 
             const product_name = await page.evaluate((xpath) => {
