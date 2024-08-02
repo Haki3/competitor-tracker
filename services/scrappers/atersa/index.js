@@ -149,7 +149,6 @@ async function atersaScrapper(url, product_type) {
                             product_name,
                             product_price,
                         };
-                        console.log(product);
                         products.push(product);
                         i++;
                     } else {

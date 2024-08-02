@@ -51,8 +51,7 @@ async function tiendaSolarScrapper(url, product_type) {
             console.log(`Navigating to ${url}?page=${pageNum}, attempt ${attempt}`);
             try {
                 await page.goto(`${url}?page=${pageNum}`, {
-                    waitUntil: 'networkidle2',
-                    timeout: 90000 // 90 segundos
+                    timeout: 50000 // 90 segundos
                 });
                 success = true;
                 break;
@@ -71,17 +70,19 @@ async function tiendaSolarScrapper(url, product_type) {
         }
 
         let hasProducts = false;
+        console.log('Connection successful. Scraping page', pageNum);
 
         const page = await browser.newPage();
+        // Wait for the page to load completely
+        await page.goto(`${url}?page=${pageNum}`, { waitUntil: 'domcontentloaded' });
         for (let i = 1; ; i++) {
-            const productNameXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
+            const productNameXPath = `  /html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/h2/a`;
             const productPriceXPath = `/html/body/main/section/div[2]/div/div[1]/section/section/div[3]/div[2]/div/div[${i}]/article/div[2]/div[3]/a/span`;
 
             const product_name = await page.evaluate((xpath) => {
                 const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                 return element ? element.textContent : null;
             }, productNameXPath);
-
             if (!product_name) {
                 break;
             }

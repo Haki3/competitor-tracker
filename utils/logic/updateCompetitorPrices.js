@@ -29,23 +29,7 @@ async function updateCompetitor(parametro) {
 
     if (scrappers[parametro]) {
         console.log(`Getting ${parametro} prices...`);
-        // Call the scrapper function if any error occurs , it will loop 5 times and pass to the next scrapper
-        try {
-            for (let attempt = 1; attempt <= 5; attempt++) {
-                try {
-                    await scrappers[parametro]();
-                    break;
-                }
-                catch (error) {
-                    console.error(`Error in ${parametro} scrapper`, error);
-                    if (attempt === 5) {
-                        console.error(`Failed to load ${parametro} after 5 attempts. Skipping...`);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error(`Error in ${parametro} scrapper`, error);
-        }
+        await scrappers[parametro]();
     } else {
         console.log('Deactivated scrapper; no parameter passed');
     }
