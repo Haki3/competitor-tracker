@@ -19,118 +19,134 @@ async function wccSolarMain() {
 
 async function wccScrapper(url, product_type) {
     console.log('URL:', url);
-    const products = [];
+    let products = [];
+    const maxAttempts = 5;
 
-    let pageNum = 1;
-    const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
-    let hasProducts = true;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        let hasProducts = true;
+        let pageNum = 1;
 
-    while (hasProducts) {
-        const page = await browser.newPage();
-        await page.goto(`${url}/page/${pageNum}`);
+        try {
+            while (hasProducts) {
+                const page = await browser.newPage();
+                await page.goto(`${url}/page/${pageNum}`, { waitUntil: 'networkidle2', timeout: 60000 }); // 60 segundos
 
-        hasProducts = false;
+                hasProducts = false;
 
-        for (let i = 1; ; i++) {
-            const productNameXPath  = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/a/h2`;
-            const productNameXPath2 = `/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/a/h2`;
-            const productPriceXPath =  `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/span[1]/ins/span/bdi`;
-            const productPriceXPath2 = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/span[1]/span/bdi`;
-            const productUlPriceXPath =`/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/span[1]/span/bdi`;
-            const productUlPriceXPath2 =`/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/span[1]/ins/span/bdi`;
-            const productUrlXPath   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/a`;
-            const productUrlXPath2   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/a`;
+                for (let i = 1; ; i++) {
+                    const productNameXPath  = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/a/h2`;
+                    const productNameXPath2 = `/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/a/h2`;
+                    const productPriceXPath =  `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/span[1]/ins/span/bdi`;
+                    const productPriceXPath2 = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/span[1]/span/bdi`;
+                    const productUlPriceXPath =`/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/span[1]/span/bdi`;
+                    const productUlPriceXPath2 =`/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/span[1]/ins/span/bdi`;
+                    const productUrlXPath   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[1]/li[${i}]/div/div[2]/a`;
+                    const productUrlXPath2   = `/html/body/div[2]/div[2]/div/div/div[1]/ul[2]/li[${i}]/div/div[2]/a`;
 
-            let product_name = await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.textContent.trim() : null;
-            }, productNameXPath);
+                    let product_name = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, productNameXPath);
 
-            if (product_name === null) {
-                product_name = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent.trim() : null;
-                }, productNameXPath2);
-            }
+                    if (product_name === null) {
+                        product_name = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent.trim() : null;
+                        }, productNameXPath2);
+                    }
 
-            if (product_name === null) {
-                break;
-            }
+                    if (product_name === null) {
+                        break;
+                    }
 
-            let product_price = await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.textContent.trim() : null;
-            }, productPriceXPath);
+                    let product_price = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.textContent.trim() : null;
+                    }, productPriceXPath);
 
-            if (product_price === null) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent.trim() : null;
-                }, productPriceXPath2);
-            }
+                    if (product_price === null) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent.trim() : null;
+                        }, productPriceXPath2);
+                    }
 
-            if (product_price === null) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent.trim() : null;
-                }, productUlPriceXPath);
-            }
+                    if (product_price === null) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent.trim() : null;
+                        }, productUlPriceXPath);
+                    }
 
-            if (product_price === null) {
-                product_price = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.textContent.trim() : null;
-                }, productUlPriceXPath2);
-            }
+                    if (product_price === null) {
+                        product_price = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.textContent.trim() : null;
+                        }, productUlPriceXPath2);
+                    }
 
-            if (product_price === null ) {
-                product_price = 'Agotado';
-            }
+                    if (product_price === null) {
+                        product_price = 'Agotado';
+                    }
 
-            let product_url = await page.evaluate((xpath) => {
-                const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                return element ? element.getAttribute('href') : null;
-            }, productUrlXPath);
+                    let product_url = await page.evaluate((xpath) => {
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        return element ? element.getAttribute('href') : null;
+                    }, productUrlXPath);
 
-            if (product_url === null) {
-                product_url = await page.evaluate((xpath) => {
-                    const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                    return element ? element.getAttribute('href') : null;
+                    if (product_url === null) {
+                        product_url = await page.evaluate((xpath) => {
+                            const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                            return element ? element.getAttribute('href') : null;
+                        }, productUrlXPath2);
+                    }
+
+                    // Cuando no haya más productos, salir del bucle
+                    if (!product_name) {
+                        break;
+                    }
+
+                    products.push({
+                        product_name,
+                        product_price,
+                        product_url,
+                    });
+
+                    hasProducts = true;
                 }
-                , productUrlXPath2);
+                pageNum++;
             }
 
-            // When there are no more products, exit the loop
-            if (!product_name) {
-                break;
-            }
+            // Añadir a cada producto el campo "product_store" y limpiar el precio
+            products.forEach(product => {
+                product.product_store = 'wcc';
+                product.product_type = product_type;
+                if (typeof product.product_price === 'string' && product.product_price !== 'Agotado') {
+                    product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
+                }
 
-            products.push({
-                product_name,
-                product_price,
-                product_url,
+                // Asignar "wcc" a productos sin tipo
+                if (!product.product_type) {
+                    product.product_type = 'wcc';
+                }
             });
 
-            hasProducts = true;
+            await browser.close();
+            return products;
+
+        } catch (error) {
+            console.error(`Error navigating to ${url}, attempt ${attempt}: ${error.message}`);
+            if (attempt === maxAttempts) {
+                console.error(`Failed to load ${url} after ${maxAttempts} attempts. Skipping...`);
+                await browser.close();
+                return [];
+            }
+        } finally {
+            await browser.close();
         }
-        pageNum++;
     }
 
-    // Añadir a cada elemento de products el campo "product_store" con el valor "wcc" y eliminar el signo de euro del precio y eliminar el punto de los miles y las comas de los decimales y convertirlo a float
-    products.forEach(product => {
-        product.product_store = 'wcc';
-        product.product_type = product_type;
-        if (typeof product.product_price === 'string' && product.product_price !== 'Agotado') {
-            product.product_price = parseFloat(product.product_price.replace('€', '').replace('.', '').replace(',', '.'));
-        }
-
-        //  Si queda cualquier producto sin product_type, asignarle el valor "wcc"
-        if (!product.product_type) {
-            product.product_type = 'wcc';
-        }
-    });
-
-    await browser.close();
     return products;
 }
 

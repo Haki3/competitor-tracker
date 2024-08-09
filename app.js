@@ -351,10 +351,10 @@ const onStart = async () => {
 }
 onStart();
 
-// Llamar a la función para enviar el informe al arrancar cada 6 horas
-setInterval(updateCompetitorPeriodically, 24 * 60 * 60 * 1000);
-// Llamar a la función para enviar el informe al arrancar cada 1 horas
-setInterval(genReportOnStart, 8 * 60 * 60 * 1000);
+// Llamar a la función para enviar el informe al arrancar cada 3 dias
+setInterval(updateCompetitorPeriodically, 6 * 60 * 60 * 1000);
+// Llamar a la función para enviar el informe al arrancar cada 4 dias
+setInterval(genReportOnStart, 4 * 24 * 60 * 60 * 1000);
 // LLamar a la función para actualizar almacen fotovoltaico cada 2 horas
 // setInterval(() => {
 //     updateCompetitor('almacen_fotovoltaico');
