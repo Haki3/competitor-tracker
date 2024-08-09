@@ -62,7 +62,6 @@ async function autosolarScrapper(url, product_type) {
     while (!isLastPage) {
         const page = await browser.newPage();
         const userAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
-        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
 
         await page.setUserAgent(userAgent);
         await page.authenticate({username: 'user', password: 'pass'}); // Si el proxy requiere autenticación
@@ -281,7 +280,7 @@ const maxRetryTime = 30000;
 
 async function ipcheckercall() {
     let attempts = 0;
-    const maxAttempts = proxies.length; // Intentar con todos los proxies disponibles
+    const maxAttempts = 5;
     let success = false;
 
     while (attempts < maxAttempts && !success) {
