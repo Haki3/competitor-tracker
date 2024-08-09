@@ -100,8 +100,6 @@ async function tiendaSolarScrapper(url, product_type) {
                 return element ? element.href : null;
             }, productNameXPath);
 
-            console.log('PRODUCT:', product_name, 'PRICE:', product_price, 'URL:', product_url);
-
             products.push({ product_name, product_price, product_type, product_store: 'tienda_solar', product_url });
             hasProducts = true;
         }

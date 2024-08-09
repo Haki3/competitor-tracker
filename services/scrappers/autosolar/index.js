@@ -7,22 +7,12 @@ const userAgents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-    // Agrega más User-Agents aquí
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/91.0.864.59 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
 ];
 
-// Lista de proxies
-const proxies = [
-    '45.77.147.46:3128',
-    '144.217.61.69:33073',
-    '162.223.90.130:80',
-    '23.19.244.109:1080',
-    '93.127.215.97:80',
-    '35.185.196.38:3128',
-    '51.89.255.67:80',
-    '217.112.80.252:80',
-    '51.38.191.151:80',
-    '165.232.129.150:80'
-];
 
 async function autosolarMain() {
     // Check the IP address
@@ -90,6 +80,8 @@ async function autosolarScrapper(url, product_type) {
         }
 
         for (let i = 1; ; i++) {
+            // Wait 5 minutes for the page to load
+            await page.waitForTimeout(300000); // 5 minutos
             // Si product_type es inverter, la xpath es diferente
             let productNameXPath;
             let productPriceXPath;
@@ -293,25 +285,17 @@ async function ipcheckercall() {
     let success = false;
 
     while (attempts < maxAttempts && !success) {
-        const proxy = proxies[Math.floor(Math.random() * proxies.length)];
-        const [host, port] = proxy.split(':');
 
         attempts++;
 
         try {
             const response = await axios.get('https://api.bigdatacloud.net/data/client-ip', {
-                proxy: {
-                    host,
-                    port: parseInt(port, 10)
-                },
                 timeout: maxRetryTime // Tiempo máximo de espera para una respuesta
             });
 
             console.log('IP Check response:', response.data);
             success = true;
         } catch (error) {
-            console.error(`Error in ipcheckercall with proxy ${proxy}: ${error.message}`);
-
             // Esperar antes de intentar con otro proxy
             await new Promise(resolve => setTimeout(resolve, 5000)); // Esperar 5 segundos
         }

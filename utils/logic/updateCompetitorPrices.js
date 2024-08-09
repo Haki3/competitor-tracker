@@ -15,7 +15,7 @@ async function updateCompetitor(parametro) {
     const scrappers = {
         'tienda_solar': tiendaSolarMain,
         'atersa': atersaMain,
-        // 'autosolar': autosolarMain,
+        'autosolar': autosolarMain,
         'supermercadosolar': supermercadosolarMain,
         'wcc': wccSolarMain,
         'almacen_fotovoltaico': almacenFotovoltaicoMain,
